@@ -1,7 +1,8 @@
 #![allow(non_camel_case_types, non_snake_case)]
 
 use std::{
-    ffi::{c_char, c_int, c_void, CStr, CString}, os::raw::c_char, sync::Mutex
+    ffi::{c_char, c_int, c_void, CStr, CString},
+    sync::Mutex,
 };
 
 use lazy_static::lazy_static;
@@ -101,8 +102,15 @@ impl AllFuncSigs {
 
     //this is more or less equivalent to tag_error
 
-    pub fn lua_pushfstring(&self, L: *mut lua_State,fmt: *const c_char /*... variable params */) -> *const c_char {
-        let actual_func: fn(L: *mut lua_State,fmt: *const c_char /*... variable params */) -> *const c_char = unsafe {
+    pub fn lua_pushfstring(
+        &self,
+        L: *mut lua_State,
+        fmt: *const c_char, /*... variable params */
+    ) -> *const c_char {
+        let actual_func: fn(
+            L: *mut lua_State,
+            fmt: *const c_char, /*... variable params */
+        ) -> *const c_char = unsafe {
             std::mem::transmute_copy(
                 &self
                     .sigs
@@ -148,7 +156,7 @@ impl AllFuncSigs {
 
     pub fn luaL_typename(&self, L: *mut lua_State, index: c_int) -> *const c_char {
         self.lua_typename(L, self.lua_type(L, index))
-    }   
+    }
 
     pub fn luaL_argerror(&self, L: *mut lua_State, narg: c_int, extramsg: *const c_char) {
         let mut ar: lua_Debug;
@@ -156,11 +164,17 @@ impl AllFuncSigs {
         //if !lua_getstack(L, 0, &ar) getstack isn't exported by blt either and as far as i can tell has no equivalent impl
     }
 
-    pub fn luaL_typerror(&self, L: *mut lua_State, narg: c_int, tname: *const c_char) /* -> c_int */ {
-        let expected =  unsafe { CStr::from_ptr(tname).to_str().unwrap() };
-        let actual = unsafe { CStr::from_ptr(self.luaL_typename(L, narg)).to_str().unwrap() };
-        let message_cstring = CString::new(format!("{} expected, got {}", expected, actual )).unwrap();
-        
+    pub fn luaL_typerror(&self, L: *mut lua_State, narg: c_int, tname: *const c_char) /* -> c_int */
+    {
+        let expected = unsafe { CStr::from_ptr(tname).to_str().unwrap() };
+        let actual = unsafe {
+            CStr::from_ptr(self.luaL_typename(L, narg))
+                .to_str()
+                .unwrap()
+        };
+        let message_cstring =
+            CString::new(format!("{} expected, got {}", expected, actual)).unwrap();
+
         let msg: *const c_char = self.lua_pushfstring(L, message_cstring.as_ptr());
 
         //return luaL_argerror(L, narg, msg);
