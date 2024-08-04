@@ -1,83 +1,195 @@
-#![allow(non_camel_case_types, non_snake_case, unused)]
+#![allow(non_camel_case_types, non_snake_case)]
 
-use std::ffi::CString;
-
-mod superblt_flat;
-
-use crate::superblt_flat::{
-    luaL_checkinteger, lua_State, lua_createtable, lua_pushcclosure, lua_pushinteger,
-    lua_pushstring, lua_setfield,
+use std::{
+    ffi::{c_char, c_int, c_void, CString},
+    sync::Mutex,
 };
 
-type lua_access_func = extern "C" fn(*const std::ffi::c_char) -> std::ffi::c_void;
+use lazy_static::lazy_static;
+mod blt_funcs;
+
+pub type lua_State = *mut *mut c_void;
+pub type lua_Integer = i32;
+pub type lua_CFunction = unsafe extern "C-unwind" fn(L: *mut lua_State) -> c_int;
+
+const ALL_LUA_FUNCS: &[&str] = &[
+    "pd2_log",
+    "luaL_checkinteger",
+    "lua_pushinteger",
+    "lua_createtable",
+    "lua_pushstring",
+    "lua_setfield",
+    "lua_pushcclosure",
+];
+
+pub struct FuncSig {
+    pub name: String,
+    pub address: *mut c_void,
+}
+
+unsafe impl Send for FuncSig {}
+
+pub struct AllFuncSigs {
+    pub sigs: Vec<FuncSig>,
+}
+
+impl AllFuncSigs {
+    pub fn new() -> Self {
+        Self {
+            sigs: Default::default(),
+        }
+    }
+
+    pub fn add_sig(&mut self, sig: FuncSig) {
+        self.sigs.push(sig);
+    }
+
+    pub fn luaL_checkinteger(&self, L: *mut lua_State, narg: c_int) -> lua_Integer {
+        let actual_func = unsafe {
+            &mut *(self
+                .sigs
+                .iter()
+                .find(|x| x.name == "luaL_checkinteger")
+                .unwrap()
+                .address
+                as *mut fn(L: *mut lua_State, narg: c_int) -> lua_Integer)
+        };
+
+        actual_func(L, narg)
+    }
+
+    pub fn lua_pushinteger(&self, L: *mut lua_State, n: lua_Integer) -> () {
+        let actual_func = unsafe {
+            &mut *(self
+                .sigs
+                .iter()
+                .find(|x| x.name == "lua_pushinteger")
+                .unwrap()
+                .address as *mut fn(L: *mut lua_State, n: lua_Integer) -> ())
+        };
+
+        actual_func(L, n)
+    }
+
+    pub fn lua_newtable(&self, L: *mut lua_State) -> () {
+        let actual_func: fn(L: *mut lua_State, narr: c_int, nrec: c_int) = unsafe {
+            std::mem::transmute_copy(
+                &self
+                    .sigs
+                    .iter()
+                    .find(|x| x.name == "lua_createtable")
+                    .unwrap()
+                    .address,
+            )
+        };
+
+        actual_func(L, 0, 0)
+    }
+
+    pub fn lua_pushstring(&self, L: *mut lua_State, s: *const c_char) -> *const c_char {
+        let actual_func: fn(L: *mut lua_State, s: *const c_char) -> *const c_char = unsafe {
+            std::mem::transmute_copy(
+                &self
+                    .sigs
+                    .iter()
+                    .find(|x| x.name == "lua_pushstring")
+                    .unwrap()
+                    .address,
+            )
+        };
+
+        actual_func(L, s)
+    }
+
+    pub fn lua_setfield(&self, L: *mut lua_State, idx: c_int, k: *const c_char) -> () {
+        let actual_func: fn(L: *mut lua_State, idx: c_int, k: *const c_char) -> () = unsafe {
+            std::mem::transmute_copy(
+                &self
+                    .sigs
+                    .iter()
+                    .find(|x| x.name == "lua_setfield")
+                    .unwrap()
+                    .address,
+            )
+        };
+
+        actual_func(L, idx, k)
+    }
+
+    pub fn lua_pushcclosure(&self, L: *mut lua_State, f: lua_CFunction, n: c_int) -> () {
+        let actual_func = unsafe {
+            &mut *(self
+                .sigs
+                .iter()
+                .find(|x| x.name == "lua_pushcclosure")
+                .unwrap()
+                .address
+                as *mut fn(L: *mut lua_State, f: lua_CFunction, n: c_int) -> ())
+        };
+
+        actual_func(L, f, n)
+    }
+
+    pub fn PD2HOOK_LOG_LOG(&self, message: &str) {
+        let message_cstr = CString::new(message).unwrap();
+
+        let actual_func: fn(
+            msg: *const c_char,
+            level: c_int,
+            file: *const c_char,
+            line: c_int,
+        ) -> () = unsafe {
+            std::mem::transmute_copy(
+                &self
+                    .sigs
+                    .iter()
+                    .find(|x| x.name == "pd2_log")
+                    .unwrap()
+                    .address,
+            )
+        };
+
+        let file_name = CString::new("lib.rs").unwrap();
+        actual_func(message_cstr.as_ptr(), 1, file_name.as_ptr(), 147);
+    }
+}
+
+lazy_static! {
+    pub static ref all_func_sigs: Mutex<AllFuncSigs> = Mutex::new(AllFuncSigs::new());
+}
+
+//this is technically used in the original but I couldn't find if it actually does anything
+type lua_access_func = extern "C" fn(*const std::ffi::c_char) -> *mut std::ffi::c_void;
 
 #[no_mangle]
 pub extern "C" fn SuperBLT_Plugin_Setup(get_exposed_function: lua_access_func) {
-    #![deny(unconditional_recursion)]
-    #[link(name="sblt_plugin")]
-    extern "C" {
-        fn SuperBLT_Plugin_Setup(get_exposed_function: lua_access_func);
+    let mut all_sigs = all_func_sigs.lock().unwrap();
+
+    for func_name in ALL_LUA_FUNCS.into_iter() {
+        let curr_func_name = CString::new(func_name.to_owned()).unwrap();
+
+        let do_i_get_anything_here = get_exposed_function(curr_func_name.as_ptr());
+
+        all_sigs.add_sig(FuncSig {
+            name: func_name.to_owned().to_owned(),
+            address: do_i_get_anything_here,
+        });
     }
-    unsafe { SuperBLT_Plugin_Setup(get_exposed_function) }
+
+    blt_funcs::plugin_init();
 }
 #[no_mangle]
 pub extern "C" fn SuperBLT_Plugin_Init_State(L: *mut lua_State) {
-    #![deny(unconditional_recursion)]
-    #[link(name="sblt_plugin")]
-    extern "C" {
-        fn SuperBLT_Plugin_Init_State(L: *mut lua_State);
-    }
-    unsafe { SuperBLT_Plugin_Init_State(L) }
+    blt_funcs::plugin_setup_lua(L);
 }
 #[no_mangle]
 pub extern "C" fn SuperBLT_Plugin_Update() {
-    #![deny(unconditional_recursion)]
-    #[link(name="sblt_plugin")]
-    extern "C" {
-        fn SuperBLT_Plugin_Update();
-    }
-    unsafe { SuperBLT_Plugin_Update() }
+    blt_funcs::plugin_update();
 }
 #[no_mangle]
-pub extern "C" fn SuperBLT_Plugin_PushLua(L: *mut lua_State) {
-    #![deny(unconditional_recursion)]
-    #[link(name="sblt_plugin")]
-    extern "C" {
-        fn SuperBLT_Plugin_PushLua(L: *mut lua_State);
-    }
-    unsafe { SuperBLT_Plugin_PushLua(L) }
-}
-
-pub unsafe extern "C" fn say_hello(L: *mut lua_State) -> std::os::raw::c_int {
-    let cancer = luaL_checkinteger(L, 1);
-
-    //this complains but since we're compiling for 32-bit it is i32
-    lua_pushinteger(L, (cancer << 2) as usize);
-
-    1
-}
-
-pub extern "C" fn Plugin_Init() {}
-
-pub extern "C" fn Plugin_Setup_Lua(_L: *mut lua_State) {}
-
-pub extern "C" fn Plugin_Update() {}
-
-pub extern "C" fn Plugin_PushLua(L: *mut lua_State) -> std::os::raw::c_int {
-    //unsafe {
-    //    lua_createtable(L, 0, 0);
-//
-    //    let hello_world_string = CString::new("Hellow, World!").unwrap();
-    //    lua_pushstring(L, hello_world_string.as_ptr());
-    //    let test = CString::new("mystring").unwrap();
-    //    lua_setfield(L, -2, test.as_ptr());
-//
-    //    lua_pushcclosure(L, say_hello, 0);
-    //    let myFuncName = CString::new("myfunction").unwrap();
-    //    lua_setfield(L, -2, myFuncName.as_ptr());
-    //}
-
-    return 1;
+pub extern "C" fn SuperBLT_Plugin_PushLua(L: *mut lua_State) -> c_int {
+    //all_sigs.PD2HOOK_LOG_LOG("test hahaa");
+    blt_funcs::plugin_push_lua(L)
 }
 
 //cannot replace these with c_* types as of now
