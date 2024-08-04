@@ -14,7 +14,9 @@ pub type lua_CFunction = unsafe extern "C-unwind" fn(L: *mut lua_State) -> c_int
 
 const ALL_LUA_FUNCS: &[&str] = &[
     "pd2_log",
-    "luaL_checkinteger",
+    "lua_tointeger",
+    "lua_isnumber",
+    "tag_error",
     "lua_pushinteger",
     "lua_createtable",
     "lua_pushstring",
@@ -44,28 +46,54 @@ impl AllFuncSigs {
         self.sigs.push(sig);
     }
 
-    pub fn luaL_checkinteger(&self, L: *mut lua_State, narg: c_int) -> lua_Integer {
-        let actual_func = unsafe {
-            &mut *(self
-                .sigs
-                .iter()
-                .find(|x| x.name == "luaL_checkinteger")
-                .unwrap()
-                .address
-                as *mut fn(L: *mut lua_State, narg: c_int) -> lua_Integer)
+    pub fn lua_tointeger(&self, L: *mut lua_State, index: c_int) -> lua_Integer {
+        let actual_func: fn(L: *mut lua_State, index: c_int) -> lua_Integer = unsafe {
+            std::mem::transmute_copy(
+                &self
+                    .sigs
+                    .iter()
+                    .find(|x| x.name == "lua_tointeger")
+                    .unwrap()
+                    .address,
+            )
         };
 
-        actual_func(L, narg)
+        actual_func(L, index)
+    }
+
+    pub fn lua_isnumber(&self, L: *mut lua_State, index: c_int) -> c_int {
+        let actual_func: fn(L: *mut lua_State, index: c_int) -> c_int = unsafe {
+            std::mem::transmute_copy(
+                &self
+                    .sigs
+                    .iter()
+                    .find(|x| x.name == "lua_isnumber")
+                    .unwrap()
+                    .address,
+            )
+        };
+
+        actual_func(L, index)
+    }
+
+    pub fn luaL_checkinteger(&self, L: *mut lua_State, narg: c_int) -> lua_Integer {
+        let d: lua_Integer = self.lua_tointeger(L, narg);
+        if d == 0 && self.lua_isnumber(L, narg) == 0 {
+            //tag_error(L, narg, LUA_TNUMBER);
+        }
+        return d;
     }
 
     pub fn lua_pushinteger(&self, L: *mut lua_State, n: lua_Integer) -> () {
-        let actual_func = unsafe {
-            &mut *(self
-                .sigs
-                .iter()
-                .find(|x| x.name == "lua_pushinteger")
-                .unwrap()
-                .address as *mut fn(L: *mut lua_State, n: lua_Integer) -> ())
+        let actual_func: fn(L: *mut lua_State, n: lua_Integer) -> () = unsafe {
+            std::mem::transmute_copy(
+                &self
+                    .sigs
+                    .iter()
+                    .find(|x| x.name == "lua_pushinteger")
+                    .unwrap()
+                    .address,
+            )
         };
 
         actual_func(L, n)
@@ -117,14 +145,15 @@ impl AllFuncSigs {
     }
 
     pub fn lua_pushcclosure(&self, L: *mut lua_State, f: lua_CFunction, n: c_int) -> () {
-        let actual_func = unsafe {
-            &mut *(self
-                .sigs
-                .iter()
-                .find(|x| x.name == "lua_pushcclosure")
-                .unwrap()
-                .address
-                as *mut fn(L: *mut lua_State, f: lua_CFunction, n: c_int) -> ())
+        let actual_func: fn(L: *mut lua_State, f: lua_CFunction, n: c_int) -> () = unsafe {
+            std::mem::transmute_copy(
+                &self
+                    .sigs
+                    .iter()
+                    .find(|x| x.name == "lua_pushcclosure")
+                    .unwrap()
+                    .address,
+            )
         };
 
         actual_func(L, f, n)
@@ -176,6 +205,8 @@ pub extern "C" fn SuperBLT_Plugin_Setup(get_exposed_function: lua_access_func) {
         });
     }
 
+    all_sigs.PD2HOOK_LOG_LOG("hehe we even get logs now yayy");
+
     blt_funcs::plugin_init();
 }
 #[no_mangle]
@@ -188,7 +219,6 @@ pub extern "C" fn SuperBLT_Plugin_Update() {
 }
 #[no_mangle]
 pub extern "C" fn SuperBLT_Plugin_PushLua(L: *mut lua_State) -> c_int {
-    //all_sigs.PD2HOOK_LOG_LOG("test hahaa");
     blt_funcs::plugin_push_lua(L)
 }
 
