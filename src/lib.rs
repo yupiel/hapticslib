@@ -16,7 +16,6 @@ const ALL_LUA_FUNCS: &[&str] = &[
     "pd2_log",
     "lua_tointeger",
     "lua_isnumber",
-    "tag_error",
     "lua_pushinteger",
     "lua_createtable",
     "lua_pushstring",
@@ -79,6 +78,7 @@ impl AllFuncSigs {
     pub fn luaL_checkinteger(&self, L: *mut lua_State, narg: c_int) -> lua_Integer {
         let d: lua_Integer = self.lua_tointeger(L, narg);
         if d == 0 && self.lua_isnumber(L, narg) == 0 {
+            //sadly tag_error is not importable via blt so not quite sure what to do here
             //tag_error(L, narg, LUA_TNUMBER);
         }
         return d;
