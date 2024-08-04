@@ -1,8 +1,7 @@
 #![allow(non_camel_case_types, non_snake_case)]
 
 use std::{
-    ffi::{c_char, c_int, c_void, CString},
-    sync::Mutex,
+    ffi::{c_char, c_int, c_void, CStr, CString}, os::raw::c_char, sync::Mutex
 };
 
 use lazy_static::lazy_static;
@@ -22,6 +21,22 @@ const ALL_LUA_FUNCS: &[&str] = &[
     "lua_setfield",
     "lua_pushcclosure",
 ];
+
+const LUA_IDSIZE: usize = 60;
+
+struct lua_Debug {
+    pub event: c_int,
+    pub name: *const c_char,
+    pub namewhat: *const c_char,
+    pub what: *const c_char,
+    pub source: *const c_char,
+    pub currentline: c_int,
+    pub nups: c_int,
+    pub linedefined: c_int,
+    pub lastlinedefined: c_int,
+    pub short_src: [char; LUA_IDSIZE],
+    i_ci: c_int,
+}
 
 pub struct FuncSig {
     pub name: String,
@@ -82,6 +97,73 @@ impl AllFuncSigs {
             //tag_error(L, narg, LUA_TNUMBER);
         }
         return d;
+    }
+
+    //this is more or less equivalent to tag_error
+
+    pub fn lua_pushfstring(&self, L: *mut lua_State,fmt: *const c_char /*... variable params */) -> *const c_char {
+        let actual_func: fn(L: *mut lua_State,fmt: *const c_char /*... variable params */) -> *const c_char = unsafe {
+            std::mem::transmute_copy(
+                &self
+                    .sigs
+                    .iter()
+                    .find(|x| x.name == "lua_pushfstring")
+                    .unwrap()
+                    .address,
+            )
+        };
+
+        actual_func(L, fmt)
+    }
+
+    pub fn lua_typename(&self, L: *mut lua_State, tp: c_int) -> *const c_char {
+        let actual_func: fn(L: *mut lua_State, tp: c_int) -> *const c_char = unsafe {
+            std::mem::transmute_copy(
+                &self
+                    .sigs
+                    .iter()
+                    .find(|x| x.name == "lua_typename")
+                    .unwrap()
+                    .address,
+            )
+        };
+
+        actual_func(L, tp)
+    }
+
+    pub fn lua_type(&self, L: *mut lua_State, index: c_int) -> c_int {
+        let actual_func: fn(L: *mut lua_State, index: c_int) -> c_int = unsafe {
+            std::mem::transmute_copy(
+                &self
+                    .sigs
+                    .iter()
+                    .find(|x| x.name == "lua_type")
+                    .unwrap()
+                    .address,
+            )
+        };
+
+        actual_func(L, index)
+    }
+
+    pub fn luaL_typename(&self, L: *mut lua_State, index: c_int) -> *const c_char {
+        self.lua_typename(L, self.lua_type(L, index))
+    }   
+
+    pub fn luaL_argerror(&self, L: *mut lua_State, narg: c_int, extramsg: *const c_char) {
+        let mut ar: lua_Debug;
+
+        //if !lua_getstack(L, 0, &ar) getstack isn't exported by blt either and as far as i can tell has no equivalent impl
+    }
+
+    pub fn luaL_typerror(&self, L: *mut lua_State, narg: c_int, tname: *const c_char) /* -> c_int */ {
+        let expected =  unsafe { CStr::from_ptr(tname).to_str().unwrap() };
+        let actual = unsafe { CStr::from_ptr(self.luaL_typename(L, narg)).to_str().unwrap() };
+        let message_cstring = CString::new(format!("{} expected, got {}", expected, actual )).unwrap();
+        
+        let msg: *const c_char = self.lua_pushfstring(L, message_cstring.as_ptr());
+
+        //return luaL_argerror(L, narg, msg);
     }
 
     pub fn lua_pushinteger(&self, L: *mut lua_State, n: lua_Integer) -> () {
@@ -193,6 +275,9 @@ type lua_access_func = extern "C" fn(*const std::ffi::c_char) -> *mut std::ffi::
 pub extern "C" fn SuperBLT_Plugin_Setup(get_exposed_function: lua_access_func) {
     let mut all_sigs = all_func_sigs.lock().unwrap();
 
+    //this can import everything declared with IMPORT_FUNC or
+    //CREATE_NORMAL_CALLABLE_SIGNATURE in blt's native plugin library
+    //https://gitlab.com/SuperBLT/native-plugin-library/-/blob/master/include/sblt_msw32_impl/fptrs.h
     for func_name in ALL_LUA_FUNCS.into_iter() {
         let curr_func_name = CString::new(func_name.to_owned()).unwrap();
 
