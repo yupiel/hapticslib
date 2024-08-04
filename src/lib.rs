@@ -187,7 +187,6 @@ lazy_static! {
     pub static ref all_func_sigs: Mutex<AllFuncSigs> = Mutex::new(AllFuncSigs::new());
 }
 
-//this is technically used in the original but I couldn't find if it actually does anything
 type lua_access_func = extern "C" fn(*const std::ffi::c_char) -> *mut std::ffi::c_void;
 
 #[no_mangle]
