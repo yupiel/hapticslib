@@ -100,6 +100,7 @@ impl AllFuncSigs {
         return d;
     }
 
+    //******START*******
     //this is more or less equivalent to tag_error
 
     pub fn lua_pushfstring(
@@ -179,6 +180,8 @@ impl AllFuncSigs {
 
         //return luaL_argerror(L, narg, msg);
     }
+
+    //******END*******
 
     pub fn lua_pushinteger(&self, L: *mut lua_State, n: lua_Integer) -> () {
         let actual_func: fn(L: *mut lua_State, n: lua_Integer) -> () = unsafe {
@@ -295,11 +298,9 @@ pub extern "C" fn SuperBLT_Plugin_Setup(get_exposed_function: lua_access_func) {
     for func_name in ALL_LUA_FUNCS.into_iter() {
         let curr_func_name = CString::new(func_name.to_owned()).unwrap();
 
-        let do_i_get_anything_here = get_exposed_function(curr_func_name.as_ptr());
-
         all_sigs.add_sig(FuncSig {
             name: func_name.to_owned().to_owned(),
-            address: do_i_get_anything_here,
+            address: get_exposed_function(curr_func_name.as_ptr()),
         });
     }
 
