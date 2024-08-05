@@ -1,27 +1,11 @@
 #![allow(non_camel_case_types, non_snake_case)]
 
-use std::ffi::{c_char, c_int, CString};
+use std::ffi::{c_int, CString};
 
 use blt_lua::{lua_State, pd2hook_log_log, ALL_LUA_FUNCS, BLT_LUA_INSTANCE};
 
 mod blt_funcs;
 mod blt_lua;
-
-const LUA_IDSIZE: usize = 60;
-
-struct lua_Debug {
-    pub event: c_int,
-    pub name: *const c_char,
-    pub namewhat: *const c_char,
-    pub what: *const c_char,
-    pub source: *const c_char,
-    pub currentline: c_int,
-    pub nups: c_int,
-    pub linedefined: c_int,
-    pub lastlinedefined: c_int,
-    pub short_src: [char; LUA_IDSIZE],
-    i_ci: c_int,
-}
 
 type lua_access_func = extern "C" fn(*const std::ffi::c_char) -> *mut std::ffi::c_void;
 
