@@ -1,9 +1,9 @@
 use std::ffi::{c_int, CString};
 
-use crate::{all_func_sigs, lua_Integer, lua_State};
+use crate::blt_lua::{lua_Integer, lua_State, BLT_LUA_INSTANCE};
 
 pub unsafe extern "C-unwind" fn say_hello(L: *mut lua_State) -> c_int {
-    let all_sigs = all_func_sigs.lock().unwrap();
+    let all_sigs = BLT_LUA_INSTANCE.lock().unwrap();
 
     let cancer: lua_Integer = all_sigs.luaL_checkinteger(L, 1);
 
@@ -23,7 +23,7 @@ pub fn plugin_init() {}
 pub fn plugin_update() {}
 
 pub fn plugin_push_lua(L: *mut lua_State) -> c_int {
-    let all_sigs = all_func_sigs.lock().unwrap();
+    let all_sigs = BLT_LUA_INSTANCE.lock().unwrap();
 
     all_sigs.lua_newtable(L);
 
@@ -31,9 +31,8 @@ pub fn plugin_push_lua(L: *mut lua_State) -> c_int {
     all_sigs.lua_pushstring(L, message.as_ptr());
     let test = CString::new("mystring").unwrap();
     all_sigs.lua_setfield(L, -2, test.as_ptr());
-    
-    all_sigs.lua_pushcclosure(L, say_hello, 0);
 
+    all_sigs.lua_pushcclosure(L, say_hello, 0);
     let myFuncName = CString::new("myfunction").unwrap();
     all_sigs.lua_setfield(L, -2, myFuncName.as_ptr());
 
