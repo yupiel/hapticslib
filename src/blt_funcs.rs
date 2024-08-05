@@ -16,6 +16,7 @@ fn cancer_test(idk: i32) -> i32 {
     idk + 1
 }
 
+#[allow(unused_variables)] //you can remove this if you actually plan to use the lua_State here
 pub fn plugin_setup_lua(L: *mut lua_State) {}
 
 pub fn plugin_init() {}

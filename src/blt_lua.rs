@@ -1,13 +1,8 @@
-use std::{
-    cell::LazyCell,
-    ffi::{CStr, CString},
-    sync::{LazyLock, Mutex},
-};
-#[allow(non_camel_case_types)]
+#![allow(non_camel_case_types)]
 use std::{
     collections::HashMap,
-    ffi::{c_char, c_double, c_int, c_void},
-    sync::OnceLock,
+    ffi::{c_char, c_double, c_int, c_void, CStr, CString},
+    sync::{LazyLock, Mutex, OnceLock},
 };
 
 pub type c_size_t = usize;
