@@ -1,27 +1,42 @@
 #![allow(non_camel_case_types, non_snake_case)]
 
-use std::ffi::{c_int, CString};
+use std::{
+    ffi::{c_int, CString},
+    fmt::format, panic,
+};
 
-use blt_lua::{lua_State, pd2hook_log_log, ALL_LUA_FUNCS, BLT_LUA_INSTANCE};
+use blt_lua::{BLT_LUA_INSTANCE, IMPORTED_LUA_FUNCTION_NAMES};
+use lua_types::lua_State;
+use pd2_logger::PD2HOOK_LOG;
 
 mod blt_funcs;
 mod blt_lua;
+mod lua_types;
+mod pd2_logger;
 
 type lua_access_func = extern "C" fn(*const std::ffi::c_char) -> *mut std::ffi::c_void;
 
 #[no_mangle]
 pub extern "C" fn SuperBLT_Plugin_Setup(get_exposed_function: lua_access_func) {
-    let mut blt_lua_instance = BLT_LUA_INSTANCE.lock().unwrap();
+    //We take out the logging function separately to spread our macros throughout the project
+    let pd2_log_func_cstring = CString::new("pd2_log").unwrap();
+    PD2HOOK_LOG.get_or_init(|| unsafe {
+        std::mem::transmute_copy(&get_exposed_function(pd2_log_func_cstring.as_ptr()))
+    });
 
-    //this can import everything declared with IMPORT_FUNC or
+    //all panics will now produce error logs in mods/logs
+    panic::set_hook(Box::new(|panic_info| {
+        PD2HOOK_LOG_PANIC!("{}", panic_info);
+    }));
+
+    //this imports everything declared with IMPORT_FUNC or
     //CREATE_NORMAL_CALLABLE_SIGNATURE in blt's native plugin library
     //https://gitlab.com/SuperBLT/native-plugin-library/-/blob/master/include/sblt_msw32_impl/fptrs.h
-    for func_name in ALL_LUA_FUNCS.into_iter() {
+    let mut blt_lua_instance = BLT_LUA_INSTANCE.lock().unwrap();
+    for func_name in IMPORTED_LUA_FUNCTION_NAMES.into_iter() {
         let curr_func_name = CString::new(func_name.to_owned()).unwrap();
         blt_lua_instance.add_function(*func_name, get_exposed_function(curr_func_name.as_ptr()));
     }
-
-    pd2hook_log_log!(&blt_lua_instance, "hehe we even get logs now yayy");
 
     blt_funcs::plugin_init();
 }

@@ -1,6 +1,9 @@
 use std::ffi::{c_int, CString};
 
-use crate::blt_lua::{lua_Integer, lua_State, BLT_LUA_INSTANCE};
+use crate::{
+    blt_lua::BLT_LUA_INSTANCE,
+    lua_types::{lua_Integer, lua_State},
+};
 
 pub unsafe extern "C-unwind" fn say_hello(L: *mut lua_State) -> c_int {
     let all_sigs = BLT_LUA_INSTANCE.lock().unwrap();
