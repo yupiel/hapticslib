@@ -24,9 +24,9 @@ jobs:
         uses: ncipollo/release-action@v1.14.0
         with:
           artifacts: ./target/i686-pc-windows-msvc/release/hapticslib.dll
-          commit: true
-          name: "Hapticslib Pre-Release ${{ github.sha }}"
+          name: "Hapticslib Pre-Release v0.1.0-rc${{ github.run_number }}"
           prerelease: true
+          tag: "v0.1.0-rc${{ github.run_number }}"
           token: ${{ secrets.GITHUB_TOKEN }}
 
 
