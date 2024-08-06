@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Rustup update and add toolchain
-        run: rustup update ${{ matrix.toolchain }} && rustup toolchain add ${{ matrix.target }}
+        run: rustup update ${{ matrix.toolchain }} && rustup target add ${{ matrix.target }}
 
       - name: Build release version
         run: cargo build --release --verbose
