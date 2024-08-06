@@ -2,7 +2,7 @@ name: Build hapticslib dll pre-release
 on: 
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 jobs:
   build_and_release:
@@ -28,8 +28,7 @@ jobs:
         uses: crazy-max/ghaction-upx@v3
         with:
           version: latest
-          files: |
-            ./target/i686-pc-windows-msvc/release/hapticslib.dll
+          files: ./target/i686-pc-windows-msvc/release/hapticslib.dll
           args: -9fq
 
       - name: Create Pre-Release
