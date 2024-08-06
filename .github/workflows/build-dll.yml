@@ -24,6 +24,14 @@ jobs:
       - name: Build release version
         run: cargo build --release --verbose
 
+      - name: Run UPX
+        uses: crazy-max/ghaction-upx@v3
+        with:
+          version: latest
+          files: |
+            ./target/i686-pc-windows-msvc/release/hapticslib.dll
+          args: -9fq
+
       - name: Create Pre-Release
         uses: ncipollo/release-action@v1.14.0
         with:
