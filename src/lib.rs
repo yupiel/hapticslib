@@ -2,7 +2,7 @@
 
 #[cfg(not(any(all(target_arch="x86",target_os="windows",any(target_env="msvc", target_env="gnu")), i_know_what_im_doing)))]
 compile_error!("This library does not currently support this target. If you know what you are doing, for example, if you are porting the library, use the `i_know_what_im_doing` config flag.");
-#[cfg(all(target_env="gnu", not(allow_gnu)))]
+#[cfg(all(target_arch="x86",target_os="windows",target_env="gnu",not(allow_gnu)))]
 compile_error!("This library's support for GNU compilers is experimental and not well tested or supported. If you know what you are getting into, pass `RUSTFLAGS='--cfg allow_gnu'` as an environment variable to cargo.");
 
 use std::{
