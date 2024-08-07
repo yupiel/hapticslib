@@ -40,12 +40,18 @@ jobs:
           version: latest
           files: ./target/${{ matrix.target }}/release/hapticslib.dll
           args: -9fq
+
+      - name: Zip dll
+        uses: vimtor/action-zip@v1.2
+        with:
+          files: ./target/${{ matrix.target }}/release/hapticslib.dll
+          dest: ${{ matrix.artifact_name }}.zip
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ./target/${{ matrix.target }}/release/hapticslib.dll
+          path: ./target/${{ matrix.target }}/release/${{ matrix.artifact_name }}.zip
           compression-level: 9
           retention-days: 1
 
@@ -60,7 +66,7 @@ jobs:
     - name: Create Pre-Release
       uses: ncipollo/release-action@v1
       with:
-        artifacts: ~/hapticslib-artifacts/*.zip
+        artifacts: ~/hapticslib-artifacts/**/*.zip
         name: "Hapticslib Pre-Release v0.1.0-rc${{ github.run_number }}"
         prerelease: true
         tag: "v0.1.0-rc${{ github.run_number }}"    
