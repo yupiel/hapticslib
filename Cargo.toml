@@ -13,6 +13,5 @@ opt-level = "z"
 panic = "abort"
 strip = true
 
-
 [lib]
 crate-type = ["cdylib"]

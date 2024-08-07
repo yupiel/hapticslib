@@ -1,11 +1,23 @@
 # Hapticslib
 
-You'll need to run
+## Build
+
+#### On Windows
+```
+rustup target add i686-pc-windows-msvc
+cargo build --release
+```
+
+#### On Linux (barely tested)
 
 ```
-rustup toolchain add i686-pc-windows-msvc
+rustup target add i686-pc-windows-gnu
+cargo build --target i686-pc-windows-gnu --release
 ```
 
-to be able to build this project.
+##### Disclaimer
+Requires mingw-w64
 
-This also **only** works on windows as of right now.
+### Disclaimer
+Testing of builds of this library has **only** been done on Windows so far.
+As such that is the only officially supported target.
