@@ -15,3 +15,7 @@ strip = true
 
 [lib]
 crate-type = ["cdylib"]
+
+[dependencies]
+buttplug = { version = "8.0.0" }
+tokio = { version = "*", features = ["rt", "rt-multi-thread"]}
