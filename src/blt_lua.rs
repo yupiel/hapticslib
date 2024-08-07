@@ -250,7 +250,7 @@ impl BltLua {
         len: *mut c_size_t,
     ) -> *const c_char {
         let s: *const c_char = self.lua_tolstring(L, narg, len);
-        if s != std::ptr::null() {
+        if s == std::ptr::null() {
             self.tag_error(L, narg, LUA_TSTRING)
         }
 

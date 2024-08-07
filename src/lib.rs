@@ -18,7 +18,7 @@ use std::{
 
 use blt_lua::{BLT_LUA_INSTANCE, IMPORTED_LUA_FUNCTION_NAMES};
 use lua_types::lua_State;
-use pd2_logger::PD2HOOK_LOG;
+use pd2_logger::{PD2HOOK_LOG, PD2HOOK_LOG_PANIC};
 
 mod blt_funcs;
 mod blt_lua;

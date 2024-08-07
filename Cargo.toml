@@ -2,7 +2,7 @@
 authors = ["Yupiel <yupiel@yupiel.net>", "Siri <siri1999kira@yahoo.co.jp>"]
 edition = "2021"
 name = "hapticslib"
-repository = "https://github.com/Siri-chan/Heisters-Haptics"
+repository = "https://github.com/yupiel/hapticslib"
 version = "0.1.0"
 
 #size reduction efforts
