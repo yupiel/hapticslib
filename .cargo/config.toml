@@ -1,3 +1,2 @@
 [build]
-#TODO: this will not build on linux for now anyway, until that's fixed this stays on msvc
-target = ["i686-pc-windows-msvc"]
+target = ["i686-pc-windows-msvc", "i686-pc-windows-gnu"]

@@ -5,36 +5,62 @@ on:
       - master
   workflow_dispatch:
 jobs:
-  build_and_release:
-    name: Build dll and add to pre-release in releases
-    runs-on: windows-latest
+  build_multiple_os:
+    name: Build dll linux and windows
     strategy:
       matrix:
-        target:
-          - i686-pc-windows-msvc
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            target: i686-pc-windows-gnu
+            artifact_name: hapticslib-gnu
+            extras: mingw-w64
+          - os: windows-latest
+            target: i686-pc-windows-msvc
+            artifact_name: hapticslib-win
         toolchain:
           - stable
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
 
+      - if: ${{ matrix.extras }}
+        run: sudo apt install ${{ matrix.extras }} -y
+      
       - name: Rustup update and add toolchain
         run: rustup update ${{ matrix.toolchain }} && rustup target add ${{ matrix.target }}
 
       - name: Build release version
-        run: cargo build --release --verbose
+        run: cargo build --target ${{ matrix.target }} --release --verbose
 
       - name: Run UPX
         uses: crazy-max/ghaction-upx@v3
         with:
           version: latest
-          files: ./target/i686-pc-windows-msvc/release/hapticslib.dll
+          files: ./target/${{ matrix.target }}/release/hapticslib.dll
           args: -9fq
-
-      - name: Create Pre-Release
-        uses: ncipollo/release-action@v1.14.0
+      
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-          artifacts: ./target/i686-pc-windows-msvc/release/hapticslib.dll
-          name: "Hapticslib Pre-Release v0.1.0-rc${{ github.run_number }}"
-          prerelease: true
-          tag: "v0.1.0-rc${{ github.run_number }}"
+          name: ${{ matrix.artifact_name }}
+          path: ./target/${{ matrix.target }}/release/hapticslib.dll
+          compression-level: 9
+          retention-days: 1
+
+  create_pre_release:
+    needs: build_multiple_os
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ~/hapticslib-artifacts
+    - name: Create Pre-Release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: ~/hapticslib-artifacts/*
+        name: "Hapticslib Pre-Release v0.1.0-rc${{ github.run_number }}"
+        prerelease: true
+        tag: "v0.1.0-rc${{ github.run_number }}"    
