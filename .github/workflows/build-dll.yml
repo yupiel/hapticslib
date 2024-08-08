@@ -4,6 +4,11 @@ on:
     branches:
       - master
   workflow_dispatch:
+    inputs:
+      release_name:
+        description: Specific codename for release
+        required: true
+        default: ""
 jobs:
   build_multiple_os:
     name: Build dll linux and windows
@@ -67,6 +72,6 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         artifacts: ~/hapticslib-artifacts/**/*.zip
-        name: "Hapticslib Pre-Release v0.1.0-rc${{ github.run_number }}"
+        name: "Hapticslib Pre-Release v0.1.0-rc${{ github.run_number }} ${{ github.event.inputs.release_name }}"
         prerelease: true
-        tag: "v0.1.0-rc${{ github.run_number }}"    
+        tag: "v0.1.0-rc${{ github.run_number }} ${{ github.event.inputs.release_name }}"    
