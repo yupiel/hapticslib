@@ -11,7 +11,7 @@ on:
         default: ""
 jobs:
   build_multiple_os:
-    name: Build dll linux and windows
+    name: Build ${{ matrix.artifact_name }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
