@@ -1,4 +1,4 @@
-#![allow(non_camel_case_types)]
+#![allow(non_camel_case_types, unused)]
 use std::{
     collections::HashMap,
     ffi::{c_char, c_int, c_void, CStr, CString},
@@ -327,7 +327,23 @@ impl BltLua {
         d
     }
 
+    //this does not work for some reason all numbers sent through this are near 0
+    pub fn luaL_checknumber(&self, L: *mut lua_State, narg: c_int) -> lua_Number {
+        let d: lua_Number = self.lua_tonumber(L, narg);
+        if d == (0 as lua_Number) && self.lua_isnumber(L, narg) == 0 {
+            self.tag_error(L, narg, LUA_TNUMBER);
+        }
+
+        d
+    }
+
     pub fn lua_pushcfunction(&self, L: *mut lua_State, func: lua_CFunction) {
         self.lua_pushcclosure(L, func, 0)
+    }
+
+    pub fn luaY_pushcfunction(&self, L: *mut lua_State, func: lua_CFunction, func_name: &str) {
+        self.lua_pushcfunction(L, func);
+        let func_name_cstring = CString::new(func_name).unwrap();
+        self.lua_setfield(L, -2, func_name_cstring.as_ptr())
     }
 }

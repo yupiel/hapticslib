@@ -12,7 +12,6 @@ compile_error!("This library does not currently support this target. If you know
 
 use std::{
     ffi::{c_int, CString},
-    fmt::format,
     panic,
 };
 

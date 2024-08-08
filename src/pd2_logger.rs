@@ -1,9 +1,9 @@
+#![allow(unused)]
 use std::{
     ffi::{c_char, c_int},
     sync::OnceLock,
 };
 
-#[allow(dead_code)]
 #[repr(C)]
 pub enum LogType {
     LOGGING_FUNC = 0,
