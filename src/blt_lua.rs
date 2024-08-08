@@ -96,20 +96,12 @@ macro_rules! create_blt_callable {
 pub static BLT_LUA_INSTANCE: LazyLock<Mutex<BltLua>> =
     LazyLock::new(|| Mutex::new(BltLua::default()));
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct BltLua {
     function_list: HashMap<String, *mut c_void>,
 }
 
 unsafe impl Send for BltLua {}
-
-impl Default for BltLua {
-    fn default() -> Self {
-        Self {
-            function_list: HashMap::default(),
-        }
-    }
-}
 
 impl BltLua {
     pub fn add_function(&mut self, function_name: &str, function_pointer: *mut c_void) {
