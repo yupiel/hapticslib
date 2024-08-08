@@ -74,4 +74,4 @@ jobs:
         artifacts: ~/hapticslib-artifacts/**/*.zip
         name: "Hapticslib Pre-Release v0.1.0-rc${{ github.run_number }} ${{ github.event.inputs.release_name }}"
         prerelease: true
-        tag: "v0.1.0-rc${{ github.run_number }} ${{ github.event.inputs.release_name }}"    
+        tag: "v0.1.0-rc${{ github.run_number }}"    
