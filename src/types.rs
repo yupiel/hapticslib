@@ -21,6 +21,8 @@ pub struct lua_State;
 
 pub type lua_Number = c_double;
 pub type lua_Integer = i32;
+
+/// Signature of a C-compatible function. The only thing lua accepts.
 pub type lua_CFunction = unsafe extern "C-unwind" fn(L: *mut lua_State) -> c_int;
 
 #[repr(C)]
