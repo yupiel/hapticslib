@@ -4,9 +4,9 @@ use std::ffi::{c_char, c_int, c_void};
 use crate::types::c_size_t;
 use crate::types::{luaL_Reg, lua_CFunction, lua_Integer, lua_Number, lua_State};
 
-use super::{model::BltLua, util::create_blt_callable};
+use super::{model::SuperBLT, util::create_blt_callable};
 
-impl BltLua {
+impl SuperBLT {
     /*
      * Structure kept largely the same, comments inclued from SuperBLT native-plugin-library fptrs.h
      * https://gitlab.com/SuperBLT/native-plugin-library/-/blob/master/include/sblt_msw32_impl/fptrs.h

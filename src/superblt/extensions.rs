@@ -1,11 +1,11 @@
 use std::ffi::CString;
 
 use crate::{
-    superblt::model::BltLua,
+    superblt::model::SuperBLT,
     types::{lua_CFunction, lua_State},
 };
 
-impl BltLua {
+impl SuperBLT {
     pub fn luaY_pushcfunction(&self, L: *mut lua_State, func: lua_CFunction, func_name: &str) {
         self.lua_pushcfunction(L, func);
         let func_name_cstring = CString::new(func_name).unwrap();

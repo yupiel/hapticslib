@@ -6,9 +6,9 @@ use crate::{
     types::{c_size_t, lua_CFunction, lua_Integer, lua_Number, lua_State},
 };
 
-use super::model::BltLua;
+use super::model::SuperBLT;
 
-impl BltLua {
+impl SuperBLT {
     // lauxlib defined shorthands
     pub fn lua_newtable(&self, L: *mut lua_State) {
         self.lua_createtable(L, 0, 0);

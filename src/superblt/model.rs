@@ -5,17 +5,17 @@ use std::{
     sync::{LazyLock, Mutex},
 };
 
-pub static SUPERBLT: LazyLock<Mutex<BltLua>> =
-    LazyLock::new(|| Mutex::new(BltLua::default()));
+pub static SUPERBLT: LazyLock<Mutex<SuperBLT>> =
+    LazyLock::new(|| Mutex::new(SuperBLT::default()));
 
 #[derive(Clone, Default)]
-pub struct BltLua {
+pub struct SuperBLT {
     pub(crate) function_list: HashMap<String, *mut c_void>,
 }
 
-unsafe impl Send for BltLua {}
+unsafe impl Send for SuperBLT {}
 
-impl BltLua {
+impl SuperBLT {
     pub fn add_function(&mut self, function_name: &str, function_pointer: *mut c_void) {
         self.function_list
             .insert(function_name.to_owned(), function_pointer);
