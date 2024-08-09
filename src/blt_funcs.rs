@@ -1,3 +1,4 @@
+#![allow(non_snake_case)]
 use std::{
     ffi::{c_char, c_int, CStr, CString},
     sync::{mpsc::Sender, OnceLock},
@@ -11,13 +12,13 @@ use buttplug::{
 use tokio::runtime::Runtime;
 
 use crate::{
-    blt_lua::BLT_LUA_INSTANCE,
-    lua_types::{lua_Integer, lua_State},
-    pd2_logger::{PD2HOOK_LOG_ERROR, PD2HOOK_LOG_LOG},
+    superblt::pd2_logger::{PD2HOOK_LOG_ERROR, PD2HOOK_LOG_LOG},
+    types::{lua_Integer, lua_State},
+    SUPERBLT,
 };
 
 pub unsafe extern "C-unwind" fn say_hello(L: *mut lua_State) -> c_int {
-    let all_sigs = BLT_LUA_INSTANCE.lock().unwrap();
+    let all_sigs = SUPERBLT.lock().unwrap();
 
     let cancer: lua_Integer = all_sigs.luaL_checkinteger(L, 1);
 
@@ -32,7 +33,7 @@ fn cancer_test(idk: i32) -> i32 {
 pub static HAPTICS_SENDER: OnceLock<Sender<f64>> = OnceLock::new();
 
 pub unsafe extern "C-unwind" fn connect_haptics(L: *mut lua_State) -> c_int {
-    let lua_instance = BLT_LUA_INSTANCE.lock().unwrap();
+    let lua_instance = SUPERBLT.lock().unwrap();
 
     let ip_addr: *const c_char = lua_instance.luaL_checkstring(L, 1);
     let ip_addr_cstring: String = unsafe { CStr::from_ptr(ip_addr).to_str().unwrap().into() };
@@ -96,7 +97,7 @@ pub unsafe extern "C-unwind" fn connect_haptics(L: *mut lua_State) -> c_int {
 }
 
 pub extern "C-unwind" fn set_haptic_strength(L: *mut lua_State) -> c_int {
-    let lua_instance = BLT_LUA_INSTANCE.lock().unwrap();
+    let lua_instance = SUPERBLT.lock().unwrap();
 
     let lua_param: lua_Integer = lua_instance.luaL_checkinteger(L, 1);
     HAPTICS_SENDER
@@ -120,7 +121,7 @@ pub fn plugin_init() {}
 pub fn plugin_update() {}
 
 pub fn plugin_push_lua(L: *mut lua_State) -> c_int {
-    let all_sigs = BLT_LUA_INSTANCE.lock().unwrap();
+    let all_sigs = SUPERBLT.lock().unwrap();
 
     all_sigs.lua_newtable(L);
 

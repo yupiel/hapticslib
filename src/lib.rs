@@ -1,4 +1,4 @@
-#![allow(non_camel_case_types, non_snake_case)]
+#![allow(non_snake_case)]
 
 #[cfg(not(any(
     all(
@@ -15,16 +15,16 @@ use std::{
     panic,
 };
 
-use blt_lua::{BLT_LUA_INSTANCE, IMPORTED_LUA_FUNCTION_NAMES};
-use lua_types::lua_State;
-use pd2_logger::{PD2HOOK_LOG, PD2HOOK_LOG_PANIC};
+use superblt::{
+    pd2_logger::{PD2HOOK_LOG, PD2HOOK_LOG_PANIC},
+    SUPERBLT, SUPERBLT_EXPORTED_FUNCTIONS,
+};
+use types::{lua_State, lua_access_func};
 
 mod blt_funcs;
-mod blt_lua;
-mod lua_types;
-mod pd2_logger;
-
-type lua_access_func = extern "C" fn(*const std::ffi::c_char) -> *mut std::ffi::c_void;
+mod globals;
+mod superblt;
+mod types;
 
 #[no_mangle]
 pub extern "C" fn SuperBLT_Plugin_Setup(get_exposed_function: lua_access_func) {
@@ -42,8 +42,8 @@ pub extern "C" fn SuperBLT_Plugin_Setup(get_exposed_function: lua_access_func) {
     //this imports everything declared with IMPORT_FUNC or
     //CREATE_NORMAL_CALLABLE_SIGNATURE in blt's native plugin library
     //https://gitlab.com/SuperBLT/native-plugin-library/-/blob/master/include/sblt_msw32_impl/fptrs.h
-    let mut blt_lua_instance = BLT_LUA_INSTANCE.lock().unwrap();
-    for func_name in IMPORTED_LUA_FUNCTION_NAMES.into_iter() {
+    let mut blt_lua_instance = SUPERBLT.lock().unwrap();
+    for func_name in SUPERBLT_EXPORTED_FUNCTIONS.into_iter() {
         let curr_func_name = CString::new(func_name.to_owned()).unwrap();
         blt_lua_instance.add_function(*func_name, get_exposed_function(curr_func_name.as_ptr()));
     }
