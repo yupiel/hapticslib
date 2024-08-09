@@ -14,10 +14,19 @@ pub enum LogType {
     LOGGING_ERROR,
 }
 
+/// Global instance of the PD2HOOK_LOG function exported by SuperBLT.
+///
+/// This is held separately from the global SuperBLT instance for convenience of use.
 pub static PD2HOOK_LOG: OnceLock<
     fn(message: *const c_char, level: c_int, file: *const c_char, line: c_int),
 > = OnceLock::new();
 
+/// Raw Logging function that is used internally by the other specialized logging functions.
+///
+/// * `level` (required) - Sets the text color when outputting to the console.
+/// * `file`  (optional) - Sets the filename in the logged line of text.
+/// * `line`  (optional) - Sets the line number in the logged line of text.
+/// * `[var]` (required) - Variable number of arguments that work similar to the format! macro.
 macro_rules! PD2HOOK_LOG_LEVEL {
     ($level:path; $($arg:tt)*) => {
         let log_message_cstring = CString::new(std::fmt::format(format_args!($($arg)*))).unwrap();

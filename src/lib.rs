@@ -42,10 +42,10 @@ pub extern "C" fn SuperBLT_Plugin_Setup(get_exposed_function: lua_access_func) {
     //this imports everything declared with IMPORT_FUNC or
     //CREATE_NORMAL_CALLABLE_SIGNATURE in blt's native plugin library
     //https://gitlab.com/SuperBLT/native-plugin-library/-/blob/master/include/sblt_msw32_impl/fptrs.h
-    let mut blt_lua_instance = SUPERBLT.lock().unwrap();
+    let mut superblt_instance = SUPERBLT.lock().unwrap();
     for func_name in SUPERBLT_EXPORTED_FUNCTIONS.into_iter() {
         let curr_func_name = CString::new(func_name.to_owned()).unwrap();
-        blt_lua_instance.add_function(*func_name, get_exposed_function(curr_func_name.as_ptr()));
+        superblt_instance.import_function(*func_name, get_exposed_function(curr_func_name.as_ptr()));
     }
 
     blt_funcs::plugin_init();
