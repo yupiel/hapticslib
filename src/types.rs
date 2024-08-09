@@ -11,6 +11,12 @@ use std::ffi::{c_char, c_double, c_int, c_void};
 pub type c_size_t = usize;
 
 // ---------- lua ----------
+
+/// The lua state is required by every lua function, however we never directly access it.
+///
+/// Therefore it's defined as a zero size struct.
+///
+/// Attempts to access *any* state internal value directly **WILL** fail.
 pub struct lua_State;
 
 pub type lua_Number = c_double;
@@ -23,6 +29,7 @@ pub struct luaL_Reg {
     pub func: lua_CFunction,
 }
 
-// ---------- superblt ----------
+// ---------- SuperBLT ----------
 
+/// Function that is injected by SuperBLT and provides function pointers based on the name parameter.
 pub type lua_access_func = extern "C" fn(*const c_char) -> *mut c_void;
