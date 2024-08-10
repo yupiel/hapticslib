@@ -77,7 +77,7 @@ pub unsafe extern "C-unwind" fn connect_haptics(L: *mut lua_State) -> c_int {
 
                 PD2HOOK_LOG_LOG!("Finished scanning. Listing devices.");
                 for device in client.devices().iter() {
-                    PD2HOOK_LOG_LOG!("Device {} [{}] found.", device.display_name().clone().map_or("Unknown".into(), |name| name), device.name());
+                    PD2HOOK_LOG_LOG!("Device {} [{}] found.", device.display_name().clone().unwrap_or("Unknown".into()), device.name());
                 }
 
                 loop {

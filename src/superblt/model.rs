@@ -22,7 +22,7 @@ impl SuperBLT {
     /// Saves a function pointer together with the function name as it's key.
     pub fn import_function(&mut self, function_name: &str, function_pointer: *mut c_void) {
         self.function_list
-            .insert(function_name.to_owned(), function_pointer);
+            .insert(function_name.into(), function_pointer);
     }
 
     /// Retrieves the function pointer associated with the provided name.
