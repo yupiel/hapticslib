@@ -100,15 +100,23 @@ pub extern "C-unwind" fn set_haptic_strength(L: *mut lua_State) -> c_int {
     let lua_instance = SUPERBLT.lock().unwrap();
 
     let lua_param: lua_Integer = lua_instance.luaL_checkinteger(L, 1);
-    HAPTICS_SENDER
+    match HAPTICS_SENDER
         .get()
         .unwrap()
         .send((lua_param as f64) / 100_f64)
-        .unwrap();
-
-    let response_cstring =
-        CString::new(format!("Set haptic strength to: {}", lua_param.to_string())).unwrap();
-    lua_instance.lua_pushstring(L, response_cstring.as_ptr());
+    {
+        Ok(_) => {
+            //TODO: I really need to write something to make these Cstrings maybe even the full response
+            let response_cstring =
+                CString::new(format!("Set haptics strength to: {}%", lua_param.to_string())).unwrap();
+            lua_instance.lua_pushstring(L, response_cstring.as_ptr());
+        }
+        Err(_) => {
+            let response_cstring =
+                CString::new("Haptics connection died. Please re-establish.").unwrap();
+            lua_instance.lua_pushstring(L, response_cstring.as_ptr());
+        }
+    }
 
     return 1;
 }
