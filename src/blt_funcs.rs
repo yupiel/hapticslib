@@ -33,9 +33,9 @@ fn cancer_test(idk: i32) -> i32 {
 pub static HAPTICS_SENDER: OnceLock<Sender<f64>> = OnceLock::new();
 
 pub unsafe extern "C-unwind" fn connect_haptics(L: *mut lua_State) -> c_int {
-    let lua_instance = SUPERBLT.lock().unwrap();
+    let superblt_instance = SUPERBLT.lock().unwrap();
 
-    let ip_addr: *const c_char = lua_instance.luaL_checkstring(L, 1);
+    let ip_addr: *const c_char = superblt_instance.luaL_checkstring(L, 1);
     let ip_addr_cstring: String = unsafe { CStr::from_ptr(ip_addr).to_str().unwrap().into() };
 
     let (tx, rx) = std::sync::mpsc::channel::<f64>();
@@ -55,17 +55,21 @@ pub unsafe extern "C-unwind" fn connect_haptics(L: *mut lua_State) -> c_int {
                     match e {
                         ButtplugClientError::ButtplugConnectorError(error) => {
                             PD2HOOK_LOG_ERROR!("Can't connect to Intiface server. Dropping connection. Message: {}", error);
+                            return;
                         }
                         ButtplugClientError::ButtplugError(error) => match error {
                             ButtplugError::ButtplugHandshakeError(error) => {
                                 PD2HOOK_LOG_ERROR!("Handshake issue with Intiface server. Dropping connection. Message: {}", error);
+                                return;
                             }
                             error => {
                                 PD2HOOK_LOG_ERROR!("Unexpected error when trying to connect to Intiface! {}", error);
+                                return;
                             }
                         },
                     }
                 }
+                
                 PD2HOOK_LOG_LOG!("Connected to intiface! Scanning for devices...");
 
                 client.start_scanning().await.unwrap();
@@ -79,12 +83,18 @@ pub unsafe extern "C-unwind" fn connect_haptics(L: *mut lua_State) -> c_int {
                 loop {
                     match rx.recv() {
                         Ok(strength) => {
-                            for device in client.devices() {
-                                device.vibrate(&buttplug::client::ScalarValueCommand::ScalarValue(strength)).await.unwrap();
+                            //This should be enough to stop the 
+                            match client.connected() && client.devices().len() > 0 {
+                                true => { 
+                                    for device in client.devices() {
+                                        device.vibrate(&buttplug::client::ScalarValueCommand::ScalarValue(strength)).await.unwrap();
+                                    }
+                                }
+                                false => break
                             }
                         },
                         Err(_) => {
-                            PD2HOOK_LOG_ERROR!("Sender died.");
+                            PD2HOOK_LOG_ERROR!("Sender died... this shouldn't happen.");
                             break;
                         }
                     }
@@ -96,25 +106,29 @@ pub unsafe extern "C-unwind" fn connect_haptics(L: *mut lua_State) -> c_int {
     return 0;
 }
 
-pub extern "C-unwind" fn set_haptic_strength(L: *mut lua_State) -> c_int {
-    let lua_instance = SUPERBLT.lock().unwrap();
+pub extern "C-unwind" fn set_haptics_strength(L: *mut lua_State) -> c_int {
+    let superblt_instance = SUPERBLT.lock().unwrap();
 
-    let lua_param: lua_Integer = lua_instance.luaL_checkinteger(L, 1);
+    let lua_param: lua_Integer = superblt_instance.luaL_checkinteger(L, 1);
     match HAPTICS_SENDER
         .get()
         .unwrap()
-        .send((lua_param as f64) / 100_f64)
+        // Acceptable range is realistically between 0 and 1.0 so we clamp the parameter to that
+        .send((lua_param.clamp(0, 100) as f64) / 100_f64)
     {
         Ok(_) => {
-            //TODO: I really need to write something to make these Cstrings maybe even the full response
-            let response_cstring =
-                CString::new(format!("Set haptics strength to: {}%", lua_param.to_string())).unwrap();
-            lua_instance.lua_pushstring(L, response_cstring.as_ptr());
+            //TODO: I really need to write something to make these CStrings maybe even the full response
+            let response_cstring = CString::new(format!(
+                "Set haptics strength to: {}%",
+                lua_param.to_string()
+            ))
+            .unwrap();
+            superblt_instance.lua_pushstring(L, response_cstring.as_ptr());
         }
         Err(_) => {
             let response_cstring =
                 CString::new("Haptics connection died. Please re-establish.").unwrap();
-            lua_instance.lua_pushstring(L, response_cstring.as_ptr());
+            superblt_instance.lua_pushstring(L, response_cstring.as_ptr());
         }
     }
 
@@ -129,20 +143,20 @@ pub fn plugin_init() {}
 pub fn plugin_update() {}
 
 pub fn plugin_push_lua(L: *mut lua_State) -> c_int {
-    let all_sigs = SUPERBLT.lock().unwrap();
+    let superblt_instance = SUPERBLT.lock().unwrap();
 
-    all_sigs.lua_newtable(L);
+    superblt_instance.lua_newtable(L);
 
     let message = CString::new("Hellow, World!").unwrap();
-    all_sigs.lua_pushstring(L, message.as_ptr());
+    superblt_instance.lua_pushstring(L, message.as_ptr());
     let test = CString::new("mystring").unwrap();
-    all_sigs.lua_setfield(L, -2, test.as_ptr());
+    superblt_instance.lua_setfield(L, -2, test.as_ptr());
 
-    all_sigs.luaY_pushcfunction(L, say_hello, "myfunction");
+    superblt_instance.luaY_pushcfunction(L, say_hello, "myfunction");
 
-    all_sigs.luaY_pushcfunction(L, connect_haptics, "connectHaptics");
+    superblt_instance.luaY_pushcfunction(L, connect_haptics, "connectHaptics");
 
-    all_sigs.luaY_pushcfunction(L, set_haptic_strength, "setStrength");
+    superblt_instance.luaY_pushcfunction(L, set_haptics_strength, "setStrength");
 
     return 1;
 }
