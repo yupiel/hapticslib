@@ -11,9 +11,9 @@ pub const SUPERBLT_EXPORTED_FUNCTIONS: &[&str] = &[
     // superblt special handling
     "is_active_state",
     "luaL_checkstack",
+    "lua_rawequal",
 
     // direct lua export
-    "lua_rawequal",
     "lua_call",
     "lua_pcall",
     "lua_gettop",
