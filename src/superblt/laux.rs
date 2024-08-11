@@ -149,7 +149,7 @@ impl SuperBLT {
         d
     }
 
-    // this does not work for some reason all numbers sent through this are near 0
+    // this *sometimes* does not work for some reason all numbers sent through this are near 0
     pub fn luaL_checknumber(&self, L: *mut lua_State, narg: c_int) -> lua_Number {
         let d: lua_Number = self.lua_tonumber(L, narg);
         if d == (0 as lua_Number) && self.lua_isnumber(L, narg) == 0 {
