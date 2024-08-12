@@ -45,7 +45,8 @@ pub extern "C" fn SuperBLT_Plugin_Setup(get_exposed_function: lua_access_func) {
     let mut superblt_instance = SUPERBLT.lock().unwrap();
     for func_name in SUPERBLT_EXPORTED_FUNCTIONS.into_iter() {
         let curr_func_name = CString::new(func_name.to_owned()).unwrap();
-        superblt_instance.import_function(*func_name, get_exposed_function(curr_func_name.as_ptr()));
+        superblt_instance
+            .import_function(*func_name, get_exposed_function(curr_func_name.as_ptr()));
     }
 
     blt_funcs::plugin_init();

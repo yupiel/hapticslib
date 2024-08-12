@@ -29,8 +29,8 @@ pub static PD2HOOK_LOG: OnceLock<
 /// * `[var]` (required) - Variable number of arguments that work similar to the format! macro.
 macro_rules! PD2HOOK_LOG_LEVEL {
     ($level:path; $($arg:tt)*) => {
-        let log_message_cstring = CString::new(std::fmt::format(format_args!($($arg)*))).unwrap();
-        let file_cstring = CString::new(file!()).unwrap();
+        let log_message_cstring = std::ffi::CString::new(std::fmt::format(format_args!($($arg)*))).unwrap();
+        let file_cstring = std::ffi::CString::new(file!()).unwrap();
 
         $crate::superblt::pd2_logger::PD2HOOK_LOG.get().unwrap()(
             log_message_cstring.as_ptr(),
@@ -40,8 +40,8 @@ macro_rules! PD2HOOK_LOG_LEVEL {
         )
     };
     ($level:path, $file:literal; $($arg:tt)*) => {
-        let log_message_cstring = CString::new(std::fmt::format(format_args!($($arg)*))).unwrap();
-        let file_cstring = CString::new(file!()).unwrap();
+        let log_message_cstring = std::ffi::CString::new(std::fmt::format(format_args!($($arg)*))).unwrap();
+        let file_cstring = std::ffi::CString::new(file!()).unwrap();
 
         $crate::superblt::pd2_logger::PD2HOOK_LOG.get().unwrap()(
             log_message_cstring.as_ptr(),
@@ -51,8 +51,8 @@ macro_rules! PD2HOOK_LOG_LEVEL {
         )
     };
     ($level:path, $file:literal, $line:literal; $($arg:tt)*) => {
-        let log_message_cstring = CString::new(std::fmt::format(format_args!($($arg)*))).unwrap();
-        let file_cstring = CString::new($file).unwrap();
+        let log_message_cstring = std::ffi::CString::new(std::fmt::format(format_args!($($arg)*))).unwrap();
+        let file_cstring = std::ffi::CString::new($file).unwrap();
 
         $crate::superblt::pd2_logger::PD2HOOK_LOG.get().unwrap()(
             log_message_cstring.as_ptr(),
