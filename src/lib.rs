@@ -16,7 +16,7 @@ use std::{
 };
 
 use superblt::{
-    pd2_logger::{PD2HOOK_LOG, PD2HOOK_LOG_LOG, PD2HOOK_LOG_PANIC},
+    pd2_logger::{PD2HOOK_LOG, PD2HOOK_LOG_PANIC},
     SUPERBLT, SUPERBLT_EXPORTED_FUNCTIONS,
 };
 use types::{lua_State, lua_access_func};
