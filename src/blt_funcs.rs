@@ -141,16 +141,6 @@ pub extern "C-unwind" fn set_haptics_strength(L: *mut lua_State) -> c_int {
     return 1;
 }
 
-pub extern "C-unwind" fn test_checknumber(L: *mut lua_State) -> c_int {
-    let superblt_instance = SUPERBLT.lock().unwrap();
-
-    let param = superblt_instance.luaL_checknumber(L, 1);
-
-    PD2HOOK_LOG_LOG!("{}", param);
-
-    return 0;
-}
-
 #[allow(unused_variables)] //you can remove this if you actually plan to use the lua_State here
 pub fn plugin_setup_lua(L: *mut lua_State) {}
 
@@ -173,8 +163,6 @@ pub fn plugin_push_lua(L: *mut lua_State) -> c_int {
     superblt_instance.luaY_pushcfunction(L, connect_haptics, "connectHaptics");
 
     superblt_instance.luaY_pushcfunction(L, set_haptics_strength, "setStrength");
-
-    superblt_instance.luaY_pushcfunction(L, test_checknumber, "test");
 
     return 1;
 }
