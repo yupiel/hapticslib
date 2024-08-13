@@ -1,8 +1,4 @@
 #![allow(unused)]
-use std::{
-    ffi::{c_char, c_int},
-    sync::OnceLock,
-};
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
@@ -17,9 +13,14 @@ pub enum LogType {
 /// Global instance of the PD2HOOK_LOG function exported by SuperBLT.
 ///
 /// This is held separately from the global SuperBLT instance for convenience of use.
-pub static PD2HOOK_LOG: OnceLock<
-    fn(message: *const c_char, level: c_int, file: *const c_char, line: c_int),
-> = OnceLock::new();
+pub static PD2HOOK_LOG: std::sync::OnceLock<
+    fn(
+        message: *const std::ffi::c_char,
+        level: std::ffi::c_int,
+        file: *const std::ffi::c_char,
+        line: std::ffi::c_int,
+    ),
+> = std::sync::OnceLock::new();
 
 /// Raw Logging function that is used internally by the other specialized logging functions.
 ///
@@ -36,7 +37,7 @@ macro_rules! PD2HOOK_LOG_LEVEL {
             log_message_cstring.as_ptr(),
             $level as std::ffi::c_int,
             file_cstring.as_ptr(),
-            line!() as c_int,
+            line!() as std::ffi::c_int,
         )
     };
     ($level:path, $file:literal; $($arg:tt)*) => {
@@ -47,7 +48,7 @@ macro_rules! PD2HOOK_LOG_LEVEL {
             log_message_cstring.as_ptr(),
             $level as std::ffi::c_int,
             file_cstring.as_ptr(),
-            line!() as c_int,
+            line!() as std::ffi::c_int,
         )
     };
     ($level:path, $file:literal, $line:literal; $($arg:tt)*) => {
@@ -58,7 +59,7 @@ macro_rules! PD2HOOK_LOG_LEVEL {
             log_message_cstring.as_ptr(),
             $level as std::ffi::c_int,
             file_cstring.as_ptr(),
-            $line as c_int,
+            $line as std::ffi::c_int,
         )
     }
 }

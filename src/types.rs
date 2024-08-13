@@ -1,8 +1,13 @@
 #![allow(non_camel_case_types, unused)]
 
-use std::ffi::{c_char, c_double, c_int, c_void};
+use std::ffi::{c_char, c_double, c_int, c_void, CStr};
 
 // ---------- C ----------
+
+/// Sync implementation for `*const c_char`, equivalent of C's `const char*` for safe ffi.
+#[repr(transparent)]
+pub struct SyncPtr(pub *const c_char);
+unsafe impl Sync for SyncPtr {}
 
 /// This is currently a nightly feature in rust core::ffi::c_size_t
 /// https://github.com/rust-lang/rust/issues/88345
