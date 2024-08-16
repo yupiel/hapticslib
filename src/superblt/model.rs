@@ -2,14 +2,16 @@ use std::{
     collections::HashMap,
     ffi::c_void,
     ptr::null_mut,
-    sync::{LazyLock, Mutex},
+    sync::{LazyLock, RwLock},
 };
 
 /// Global instance of SuperBLT which holds all associated internal and lua functions.
-pub static SUPERBLT: LazyLock<Mutex<SuperBLT>> = LazyLock::new(|| Mutex::new(SuperBLT::default()));
+//pub static SUPERBLT: LazyLock<Mutex<SuperBLT>> = LazyLock::new(|| Mutex::new(SuperBLT::default()));
+pub static SUPERBLT: LazyLock<RwLock<SuperBLT>> =
+    LazyLock::new(|| RwLock::new(SuperBLT::default()));
 
 /// Structure representing the environment injected by [SuperBLT](https://gitlab.com/znixian/payday2-superblt) into it's native Plugins.
-/// 
+///
 /// Holds all of the [SuperBLT](https://gitlab.com/znixian/payday2-superblt)-internal and lua functions.
 #[derive(Clone, Default)]
 pub struct SuperBLT {
@@ -17,6 +19,7 @@ pub struct SuperBLT {
 }
 
 unsafe impl Send for SuperBLT {}
+unsafe impl Sync for SuperBLT {}
 
 impl SuperBLT {
     /// Saves a function pointer together with the function name as it's key.

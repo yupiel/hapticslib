@@ -798,6 +798,7 @@ name = "hapticslib"
 version = "0.1.0"
 dependencies = [
  "buttplug",
+ "log",
  "tokio",
 ]
 

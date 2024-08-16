@@ -1,5 +1,9 @@
 #![allow(unused)]
 
+use std::ffi::CString;
+
+use log::Level;
+
 #[allow(non_camel_case_types)]
 #[repr(C)]
 pub enum LogType {
@@ -35,7 +39,7 @@ macro_rules! PD2HOOK_LOG_LEVEL {
 
         $crate::superblt::pd2_logger::PD2HOOK_LOG.get().unwrap()(
             log_message_cstring.as_ptr(),
-            $level as std::ffi::c_int,
+            $level.into(),
             file_cstring.as_ptr(),
             line!() as std::ffi::c_int,
         )
@@ -46,7 +50,7 @@ macro_rules! PD2HOOK_LOG_LEVEL {
 
         $crate::superblt::pd2_logger::PD2HOOK_LOG.get().unwrap()(
             log_message_cstring.as_ptr(),
-            $level as std::ffi::c_int,
+            $level.into(),
             file_cstring.as_ptr(),
             line!() as std::ffi::c_int,
         )
@@ -57,7 +61,7 @@ macro_rules! PD2HOOK_LOG_LEVEL {
 
         $crate::superblt::pd2_logger::PD2HOOK_LOG.get().unwrap()(
             log_message_cstring.as_ptr(),
-            $level as std::ffi::c_int,
+            $level.into(),
             file_cstring.as_ptr(),
             $line as std::ffi::c_int,
         )
@@ -130,3 +134,52 @@ macro_rules! PD2HOOK_LOG_PANIC {
     };
 }
 pub(crate) use PD2HOOK_LOG_PANIC;
+
+// Rust log implementation for convenience
+
+// Necessary mapping because these are more or less in reverse order or don't exist
+impl From<log::Level> for LogType {
+    fn from(value: log::Level) -> Self {
+        match value {
+            Level::Error => LogType::LOGGING_ERROR,
+            Level::Warn => LogType::LOGGING_WARN,
+            Level::Info => LogType::LOGGING_LOG,
+            _ => LogType::LOGGING_LOG,
+        }
+    }
+}
+
+impl Into<std::ffi::c_int> for LogType {
+    fn into(self) -> std::ffi::c_int {
+        self as std::ffi::c_int
+    }
+}
+
+pub static RUST_PD2_LOGGER: PD2Logger = PD2Logger;
+
+pub struct PD2Logger;
+
+impl log::Log for PD2Logger {
+    fn enabled(&self, metadata: &log::Metadata) -> bool {
+        metadata.level() <= Level::Debug
+    }
+
+    fn log(&self, record: &log::Record) {
+        if self.enabled(record.metadata()) {
+            let message_cstring = CString::new(format!("{}", record.args())).unwrap();
+            let file_cstring = CString::new(format!("{}", record.file().unwrap_or(""))).unwrap();
+
+            PD2HOOK_LOG.get().unwrap()(
+                message_cstring.as_ptr(),
+                LogType::from(record.level()).into(),
+                file_cstring.as_ptr(),
+                record.line().unwrap_or(0) as i32,
+            );
+        }
+    }
+
+    // Not necessary since this is done on the BLT end and we just pass down the logs
+    fn flush(&self) {
+        unimplemented!()
+    }
+}
