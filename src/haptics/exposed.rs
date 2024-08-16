@@ -6,8 +6,8 @@ use crate::{
 };
 
 use super::intiface::{
-    haptics_create_connection, haptics_ping, haptics_re_scan, haptics_set_strength,
-    haptics_stop_all,
+    haptics_create_connection, haptics_ping, haptics_scan_start, haptics_scan_stop,
+    haptics_set_strength, haptics_stop_all,
 };
 
 fn connection_died(L: *mut lua_State) {
@@ -45,10 +45,21 @@ pub extern "C-unwind" fn ping(L: *mut lua_State) -> c_int {
     return 1;
 }
 
-pub extern "C-unwind" fn re_scan(L: *mut lua_State) -> c_int {
+pub extern "C-unwind" fn scan_start(L: *mut lua_State) -> c_int {
     let superblt_instance = SUPERBLT.read().unwrap();
 
-    match haptics_re_scan() {
+    match haptics_scan_start() {
+        Ok(msg) => superblt_instance.luaY_stringreturnvalue(L, msg),
+        Err(_) => connection_died(L),
+    }
+
+    return 1;
+}
+
+pub extern "C-unwind" fn scan_stop(L: *mut lua_State) -> c_int {
+    let superblt_instance = SUPERBLT.read().unwrap();
+
+    match haptics_scan_stop() {
         Ok(msg) => superblt_instance.luaY_stringreturnvalue(L, msg),
         Err(_) => connection_died(L),
     }

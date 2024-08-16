@@ -2,7 +2,7 @@
 use std::ffi::c_int;
 
 use crate::{
-    haptics::exposed::{connect_haptics, ping, re_scan, set_strength, stop_all},
+    haptics::exposed::{connect_haptics, ping, scan_start, scan_stop, set_strength, stop_all},
     superblt::SUPERBLT,
     types::lua_State,
 };
@@ -21,7 +21,8 @@ pub fn plugin_push_lua(L: *mut lua_State) -> c_int {
 
     superblt_instance.luaY_pushcfunction(L, connect_haptics, "connectHaptics");
     superblt_instance.luaY_pushcfunction(L, ping, "ping");
-    superblt_instance.luaY_pushcfunction(L, re_scan, "reScan");
+    superblt_instance.luaY_pushcfunction(L, scan_start, "scanStart");
+    superblt_instance.luaY_pushcfunction(L, scan_stop, "scanStop");
     superblt_instance.luaY_pushcfunction(L, set_strength, "setStrength");
     superblt_instance.luaY_pushcfunction(L, stop_all, "stopAll");
 

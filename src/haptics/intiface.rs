@@ -23,9 +23,14 @@ pub fn haptics_create_connection(websocket_address: String) -> Result<String, Se
     Ok("Connection established successfully.".into())
 }
 
-pub fn haptics_re_scan() -> Result<String, SendError<HapticsMessage>> {
-    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::Scan)
-        .map(|_| "Re-Scanned Intiface connected devices.".into())
+pub fn haptics_scan_start() -> Result<String, SendError<HapticsMessage>> {
+    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::ScanStart)
+        .map(|_| "Scanning for connected devices started...".into())
+}
+
+pub fn haptics_scan_stop() -> Result<String, SendError<HapticsMessage>> {
+    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::ScanStop)
+        .map(|_| "Scanning for connected devices stopped.".into())
 }
 
 pub fn haptics_ping() -> Result<String, SendError<HapticsMessage>> {
@@ -104,7 +109,8 @@ pub fn haptics_spawn_thread(websocket_address: String, mpsc_receiver: Receiver<H
                                 // This is just used to check if the main loop is still alive
                                 continue 'main;
                             },
-                            HapticsMessage::Scan => todo!(),
+                            HapticsMessage::ScanStart => todo!(),
+                            HapticsMessage::ScanStop => todo!(),
                             HapticsMessage::StopAll => {
                                 for device in client.devices() {
                                     device.vibrate(&buttplug::client::ScalarValueCommand::ScalarValue(0_f64)).await.inspect_err(|err| {

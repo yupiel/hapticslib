@@ -5,7 +5,8 @@ pub static HAPTICS_SENDER: OnceLock<RwLock<Sender<HapticsMessage>>> = OnceLock::
 pub enum HapticsMessage {
     Kill,
     Ping,
-    Scan,
+    ScanStart,
+    ScanStop,
     Strength(f64),
     StopAll,
 }
