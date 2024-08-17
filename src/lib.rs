@@ -15,8 +15,9 @@ use std::{
     panic,
 };
 
+use log::error;
 use superblt::{
-    pd2_logger::{PD2HOOK_LOG, PD2HOOK_LOG_PANIC, RUST_PD2_LOGGER},
+    pd2_logger::{PD2HOOK_LOG, RUST_PD2_LOGGER},
     SUPERBLT, SUPERBLT_EXPORTED_FUNCTIONS,
 };
 use types::{lua_State, lua_access_func, SyncPtr};
@@ -36,12 +37,12 @@ pub extern "C" fn SuperBLT_Plugin_Setup(get_exposed_function: lua_access_func) {
 
     // All panics will now produce error logs in mods/logs
     panic::set_hook(Box::new(|panic_info| {
-        PD2HOOK_LOG_PANIC!("{}", panic_info);
+        error!("{}", panic_info);
     }));
 
     // Use the rust custom logger. This is optional, you can use the macros directly if you want
     log::set_logger(&RUST_PD2_LOGGER).unwrap();
-    
+
     // Set the max log level based on if this is a release or a debug build
     if cfg!(debug_assertions) {
         log::set_max_level(log::LevelFilter::Debug);

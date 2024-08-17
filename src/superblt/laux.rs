@@ -9,7 +9,6 @@ use crate::{
 use super::model::SuperBLT;
 
 impl SuperBLT {
-    // lauxlib defined shorthands
     pub fn lua_newtable(&self, L: *mut lua_State) {
         self.lua_createtable(L, 0, 0);
     }

@@ -123,18 +123,6 @@ macro_rules! PD2HOOK_LOG_ERROR {
 }
 pub(crate) use PD2HOOK_LOG_ERROR;
 
-macro_rules! PD2HOOK_LOG_PANIC {
-    ($($arg:tt)*) => {
-        $crate::superblt::pd2_logger::PD2HOOK_LOG_LEVEL!(
-            $crate::superblt::pd2_logger::LogType::LOGGING_ERROR,
-            "",
-            0;
-            $($arg)*
-        );
-    };
-}
-pub(crate) use PD2HOOK_LOG_PANIC;
-
 // Rust log implementation for convenience
 
 // Necessary mapping because these are more or less in reverse order or don't exist
@@ -179,7 +167,5 @@ impl log::Log for PD2Logger {
     }
 
     // Not necessary since this is done on the BLT end and we just pass down the logs
-    fn flush(&self) {
-        unimplemented!()
-    }
+    fn flush(&self) {}
 }

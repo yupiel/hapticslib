@@ -1,8 +1,8 @@
 /// Creates a function from the provided name by looking it up in the library of function pointers
 /// in the current scope.
-/// 
+///
 /// Functions are unsafely transmuted (cast) **once** on first acces.
-/// 
+///
 /// Subsequent attempts to use the function will use the previously cast pointer.
 macro_rules! create_blt_callable {
     ($func_name:ident, $($param:tt: $ty:ty), *; $ret:ty) => {
