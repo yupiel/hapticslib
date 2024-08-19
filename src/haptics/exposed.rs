@@ -7,7 +7,7 @@ use crate::{
 
 use super::intiface::{
     haptics_create_connection, haptics_ping, haptics_scan_start, haptics_scan_stop,
-    haptics_set_strength, haptics_stop_all,
+    haptics_stop_all, haptics_vibrate,
 };
 
 fn connection_died(L: *mut lua_State) {
@@ -67,13 +67,10 @@ pub extern "C-unwind" fn scan_stop(L: *mut lua_State) -> c_int {
     return 1;
 }
 
-pub extern "C-unwind" fn set_strength(L: *mut lua_State) -> c_int {
+pub extern "C-unwind" fn stop_all(L: *mut lua_State) -> c_int {
     let superblt_instance = SUPERBLT.read().unwrap();
 
-    // This is 0 if the param is not an integer, so I will ignore error cases
-    let lua_param: lua_Integer = superblt_instance.luaL_checkinteger(L, 1);
-
-    match haptics_set_strength(lua_param) {
+    match haptics_stop_all() {
         Ok(msg) => superblt_instance.luaY_stringreturnvalue(L, msg),
         Err(_) => connection_died(L),
     }
@@ -81,10 +78,13 @@ pub extern "C-unwind" fn set_strength(L: *mut lua_State) -> c_int {
     return 1;
 }
 
-pub extern "C-unwind" fn stop_all(L: *mut lua_State) -> c_int {
+pub extern "C-unwind" fn vibrate(L: *mut lua_State) -> c_int {
     let superblt_instance = SUPERBLT.read().unwrap();
 
-    match haptics_stop_all() {
+    // This is 0 if the param is not an integer, so I will ignore error cases
+    let lua_param: lua_Integer = superblt_instance.luaL_checkinteger(L, 1);
+
+    match haptics_vibrate(lua_param) {
         Ok(msg) => superblt_instance.luaY_stringreturnvalue(L, msg),
         Err(_) => connection_died(L),
     }

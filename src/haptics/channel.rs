@@ -1,14 +1,16 @@
-use std::sync::{mpsc::Sender, OnceLock, RwLock};
+use std::sync::{atomic::AtomicBool, mpsc::Sender, LazyLock, Mutex, OnceLock, RwLock};
 
 pub static HAPTICS_SENDER: OnceLock<RwLock<Sender<HapticsMessage>>> = OnceLock::new();
+pub static HAPTICS_IS_SCANNING: AtomicBool = AtomicBool::new(false);
+pub static HAPTICS_DEVICES: LazyLock<Mutex<Vec<String>>> = LazyLock::new(|| Mutex::new(Vec::new()));
 
 pub enum HapticsMessage {
     Kill,
     Ping,
     ScanStart,
     ScanStop,
-    Strength(f64),
     StopAll,
+    Vibrate(f64),
 }
 
 pub fn set_or_update_haptics_sender(new_haptics_sender: Sender<HapticsMessage>) {

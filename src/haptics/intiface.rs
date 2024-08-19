@@ -3,6 +3,8 @@ use std::{sync::mpsc::{Receiver, SendError}, thread};
 use buttplug::{client::{ButtplugClient, ButtplugClientError}, core::{connector::new_json_ws_client_connector, errors::ButtplugError}};
 use log::{error, info};
 
+use crate::haptics::handlers::{self, HandlerContext};
+
 use super::channel::{set_or_update_haptics_sender, HapticsMessage, HAPTICS_SENDER};
 
 pub fn haptics_create_connection(websocket_address: String) -> Result<String, SendError<HapticsMessage>> {
@@ -37,8 +39,8 @@ pub fn haptics_ping() -> Result<String, SendError<HapticsMessage>> {
         .map(|_| "Heister's Haptics thread is alive and well.".into())
 }
 
-pub fn haptics_set_strength(strength: i32) -> Result<String, SendError<HapticsMessage>> {
-    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::Strength(
+pub fn haptics_vibrate(strength: i32) -> Result<String, SendError<HapticsMessage>> {
+    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::Vibrate(
         strength.clamp(0, 100) as f64 / 100_f64)
     ).map(|_| format!("Set haptics strength to: {}%", strength))
 }
@@ -87,45 +89,36 @@ pub fn haptics_spawn_thread(websocket_address: String, mpsc_receiver: Receiver<H
                 info!("Device {} [{}] found.", device.display_name().clone().unwrap_or("Unknown".into()), device.name());
             }
 
+            let main_loop_context = HandlerContext {
+                haptics_client: client,
+                haptics_receiver: mpsc_receiver
+            };
+
             'main: loop {
-                match mpsc_receiver.recv() {
+                match main_loop_context.haptics_receiver.recv() {
                     Ok(haptics_message) => {
-                        if !client.connected() {
+                        if !main_loop_context.haptics_client.connected() {
                             error!("Client lost connection to intiface WebSocket. Closing Thread.");
                             break 'main;
                         }
 
                         match haptics_message {
                             HapticsMessage::Kill => {
-                                client.disconnect().await.inspect_err(|err| {
-                                    error!("Disconnecting Heister's Haptics Client failed. Message: {}", err);
-                                }).unwrap_or(());
-
-                                info!("Kill Signal received. Closing Thread.");
+                                handlers::kill(&main_loop_context).await;
                                 break 'main;
                             },
                             HapticsMessage::Ping => {/*  This is just used to check if the main loop is still alive */},
                             HapticsMessage::ScanStart => {
-                                info!("Starting scanning for devices...");
-                                client.start_scanning().await.unwrap();
-                            },
-                            HapticsMessage::ScanStop => {
-                                info!("Stopping scanning for devices.");
-                                client.stop_scanning().await.unwrap();
-                            },
+                                handlers::scan::start(&main_loop_context).await;
+                             },
+                            HapticsMessage::ScanStop => { 
+                                info!("Cannot stop scanning because no scan is running.")
+                             },
                             HapticsMessage::StopAll => {
-                                for device in client.devices() {
-                                    device.vibrate(&buttplug::client::ScalarValueCommand::ScalarValue(0_f64)).await.inspect_err(|err| {
-                                        error!("Failed to send vibration command to device. Message: {}", err);
-                                    }).unwrap_or(());
-                                }
+                                handlers::stop_all(&main_loop_context).await;
                             },
-                            HapticsMessage::Strength(strength) => {
-                                for device in client.devices() {
-                                    device.vibrate(&buttplug::client::ScalarValueCommand::ScalarValue(strength)).await.inspect_err(|err| {
-                                        error!("Failed to send vibration command to device. Message: {}", err);
-                                    }).unwrap_or(());
-                                }
+                            HapticsMessage::Vibrate(strength) => {
+                                handlers::vibrate(&main_loop_context, strength).await;
                             },
                         }
                     },
