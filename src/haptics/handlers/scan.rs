@@ -37,7 +37,6 @@ pub async fn start(ctx: &HandlerContext) {
                 HapticsMessage::StopAll => {
                     stop(ctx).await;
                     super::stop_all(ctx).await;
-
                     break 'scan;
                 }
                 HapticsMessage::Vibrate(_) => {

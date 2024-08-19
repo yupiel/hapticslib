@@ -3,17 +3,22 @@ use std::{sync::mpsc::{Receiver, SendError}, thread};
 use buttplug::{client::{ButtplugClient, ButtplugClientError}, core::{connector::new_json_ws_client_connector, errors::ButtplugError}};
 use log::{error, info};
 
-use crate::haptics::handlers::{self, HandlerContext};
+use crate::haptics::{channel::HAPTICS_DEVICES, handlers::{self, HandlerContext}};
 
 use super::channel::{set_or_update_haptics_sender, HapticsMessage, HAPTICS_SENDER};
 
 pub fn haptics_create_connection(websocket_address: String) -> Result<String, SendError<HapticsMessage>> {
-    match HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::Ping) {
-        Ok(_) => return Ok("Thread is still alive and well. Ignoring new connection request.".into()),
-        Err(_) => {
-            // Try to force kill the thread if just the sending of the message failed for some inexplicable reason
-            HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::Kill).unwrap_or(());
-        }
+    match HAPTICS_SENDER.get(){
+        Some(sender) => {
+            match sender.read().unwrap().send(HapticsMessage::Ping) {
+                Ok(_) => return Ok("Thread is still alive and well. Ignoring new connection request.".into()),
+                Err(_) => {
+                    // Try to force kill the thread if just the sending of the message failed for some inexplicable reason
+                    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::Kill).unwrap_or(());
+                }
+            }
+        }, 
+        None => {/* Was not initialized previously */}
     }
 
     let (tx, rx) = std::sync::mpsc::channel::<HapticsMessage>();
@@ -39,15 +44,15 @@ pub fn haptics_ping() -> Result<String, SendError<HapticsMessage>> {
         .map(|_| "Heister's Haptics thread is alive and well.".into())
 }
 
+pub fn haptics_stop_all() -> Result<String, SendError<HapticsMessage>> {
+    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::StopAll)
+        .map(|_| "Stopped all connected devices.".into())
+}
+
 pub fn haptics_vibrate(strength: i32) -> Result<String, SendError<HapticsMessage>> {
     HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::Vibrate(
         strength.clamp(0, 100) as f64 / 100_f64)
     ).map(|_| format!("Set haptics strength to: {}%", strength))
-}
-
-pub fn haptics_stop_all() -> Result<String, SendError<HapticsMessage>> {
-    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::StopAll)
-        .map(|_| "Stopped all connected devices.".into())
 }
 
 pub fn haptics_spawn_thread(websocket_address: String, mpsc_receiver: Receiver<HapticsMessage>) {
@@ -81,13 +86,16 @@ pub fn haptics_spawn_thread(websocket_address: String, mpsc_receiver: Receiver<H
 
             info!("Connected to intiface! Scanning for devices...");
 
+            //TODO: Do we want to do this?
             client.start_scanning().await.unwrap();
             client.stop_scanning().await.unwrap();
 
-            info!("Finished scanning. Listing devices.");
-            for device in client.devices().iter() {
-                info!("Device {} [{}] found.", device.display_name().clone().unwrap_or("Unknown".into()), device.name());
+            //Load initial list of devices
+            let mut device_list = HAPTICS_DEVICES.lock().unwrap();
+            for device in client.devices() {
+                device_list.push(device.name().into());
             }
+            drop(device_list);
 
             let main_loop_context = HandlerContext {
                 haptics_client: client,
@@ -107,18 +115,25 @@ pub fn haptics_spawn_thread(websocket_address: String, mpsc_receiver: Receiver<H
                                 handlers::kill(&main_loop_context).await;
                                 break 'main;
                             },
-                            HapticsMessage::Ping => {/*  This is just used to check if the main loop is still alive */},
+                            HapticsMessage::Ping => {
+                                // This is just used to check if the main loop is still alive
+                                continue 'main;
+                            },
                             HapticsMessage::ScanStart => {
                                 handlers::scan::start(&main_loop_context).await;
-                             },
+                                continue 'main;
+                            },
                             HapticsMessage::ScanStop => { 
-                                info!("Cannot stop scanning because no scan is running.")
-                             },
+                                info!("Cannot stop scanning because no scan is running.");
+                                continue 'main;
+                            },
                             HapticsMessage::StopAll => {
                                 handlers::stop_all(&main_loop_context).await;
+                                continue 'main;
                             },
                             HapticsMessage::Vibrate(strength) => {
                                 handlers::vibrate(&main_loop_context, strength).await;
+                                continue 'main;
                             },
                         }
                     },

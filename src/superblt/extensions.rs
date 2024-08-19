@@ -27,8 +27,22 @@ impl SuperBLT {
         }
     }
 
-    pub fn luaY_stringreturnvalue(&self, L: *mut lua_State, value: String) {
+    pub fn luaY_pushstring(&self, L: *mut lua_State, value: String) {
         let return_value = CString::new(value).unwrap();
         self.lua_pushstring(L, return_value.as_ptr());
+    }
+
+    pub fn luaY_setfield(&self, L: *mut lua_State, index: c_int, key: String) {
+        let key_cstring = CString::new(key).unwrap();
+        self.lua_setfield(L, index, key_cstring.as_ptr());
+    }
+
+    pub fn luaY_vectoarraytable(&self, L: *mut lua_State, string_list: &Vec<String>) {
+        self.lua_newtable(L);
+
+        for (index, string_entry) in string_list.iter().enumerate() {
+            self.luaY_pushstring(L, string_entry.into());
+            self.luaY_setfield(L, -2, (index + 1).to_string());
+        }
     }
 }
