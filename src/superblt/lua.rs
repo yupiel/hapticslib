@@ -1,4 +1,4 @@
-#![allow(non_snake_case)]
+#![allow(dead_code, non_snake_case)]
 use std::ffi::{c_char, c_int, c_void};
 
 use crate::types::c_size_t;

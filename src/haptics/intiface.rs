@@ -1,58 +1,67 @@
-use std::{sync::mpsc::{Receiver, SendError}, thread};
+use std::{sync::mpsc::{channel, Receiver}, thread};
 
 use buttplug::{client::{ButtplugClient, ButtplugClientError}, core::{connector::new_json_ws_client_connector, errors::ButtplugError}};
 use log::{error, info};
 
 use crate::haptics::{channel::HAPTICS_DEVICES, handlers::{self, HandlerContext}};
 
-use super::channel::{set_or_update_haptics_sender, HapticsMessage, HAPTICS_SENDER};
+use super::channel::{send_haptics_message, set_or_update_haptics_sender, HapticsMessage};
 
-pub fn haptics_create_connection(websocket_address: String) -> Result<String, SendError<HapticsMessage>> {
-    match HAPTICS_SENDER.get(){
-        Some(sender) => {
-            match sender.read().unwrap().send(HapticsMessage::Ping) {
-                Ok(_) => return Ok("Thread is still alive and well. Ignoring new connection request.".into()),
-                Err(_) => {
-                    // Try to force kill the thread if just the sending of the message failed for some inexplicable reason
-                    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::Kill).unwrap_or(());
-                }
-            }
-        }, 
-        None => {/* Was not initialized previously */}
+pub fn haptics_create_connection(websocket_address: String) -> String {
+    if send_haptics_message(HapticsMessage::Ping).is_ok() {
+        return "Thread is still alive and well. Ignoring new connection request.".into();
     }
 
-    let (tx, rx) = std::sync::mpsc::channel::<HapticsMessage>();
-    set_or_update_haptics_sender(tx);
+    let (tx, rx) = channel::<HapticsMessage>();
+    if let Err(set_or_update_error) = set_or_update_haptics_sender(tx) {
+        return set_or_update_error;
+    }
 
     haptics_spawn_thread(websocket_address, rx);
 
-    Ok("Connection established successfully.".into())
+    "Connection established successfully.".into()
 }
 
-pub fn haptics_scan_start() -> Result<String, SendError<HapticsMessage>> {
-    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::ScanStart)
-        .map(|_| "Scanning for connected devices started...".into())
+pub fn haptics_scan_start() -> String {
+    match send_haptics_message(HapticsMessage::ScanStart) {
+        Ok(_) => "Scanning for connected devices started...".into(),
+        Err(err) => err
+    }
 }
 
-pub fn haptics_scan_stop() -> Result<String, SendError<HapticsMessage>> {
-    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::ScanStop)
-        .map(|_| "Scanning for connected devices stopped.".into())
+pub fn haptics_scan_stop() -> String {
+    match send_haptics_message(HapticsMessage::ScanStop) {
+        Ok(_) => "Scanning for connected devices stopped.".into(),
+        Err(err) => err
+    }
 }
 
-pub fn haptics_ping() -> Result<String, SendError<HapticsMessage>> {
-    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::Ping)
-        .map(|_| "Heister's Haptics thread is alive and well.".into())
+pub fn haptics_ping() -> String {
+    match send_haptics_message(HapticsMessage::Ping) {
+        Ok(_) => "Heister's Haptics thread is alive and well.".into(),
+        Err(err) => err
+    }
 }
 
-pub fn haptics_stop_all() -> Result<String, SendError<HapticsMessage>> {
-    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::StopAll)
-        .map(|_| "Stopped all connected devices.".into())
+pub fn haptics_stop_all() -> String {
+    match send_haptics_message(HapticsMessage::StopAll) {
+        Ok(_) => "Stopped all connected devices.".into(),
+        Err(err) => err
+    }
 }
 
-pub fn haptics_vibrate(strength: i32) -> Result<String, SendError<HapticsMessage>> {
-    HAPTICS_SENDER.get().unwrap().read().unwrap().send(HapticsMessage::Vibrate(
-        strength.clamp(0, 100) as f64 / 100_f64)
-    ).map(|_| format!("Set haptics strength to: {}%", strength))
+pub fn haptics_vibrate(strength: i32) -> String {
+    match send_haptics_message(HapticsMessage::Vibrate(strength.clamp(0, 100) as f64 / 100_f64)) {
+        Ok(_) => format!("Set haptics strength to: {}%", strength),
+        Err(err) => err
+    }
+}
+
+pub fn haptics_kill() -> String {
+    match send_haptics_message(HapticsMessage::Kill) {
+        Ok(_) => "Killing Haptics thread...".into(),
+        Err(err) => err
+    }
 }
 
 pub fn haptics_spawn_thread(websocket_address: String, mpsc_receiver: Receiver<HapticsMessage>) {
