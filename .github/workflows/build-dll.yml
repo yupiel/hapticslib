@@ -11,7 +11,7 @@ on:
         default: ""
 jobs:
   build_multiple_os:
-    name: Build dll linux and windows
+    name: Build ${{ matrix.artifact_name }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -74,4 +74,4 @@ jobs:
         artifacts: ~/hapticslib-artifacts/**/*.zip
         name: "Hapticslib Pre-Release v0.1.0-rc${{ github.run_number }} ${{ github.event.inputs.release_name }}"
         prerelease: true
-        tag: "v0.1.0-rc${{ github.run_number }} ${{ github.event.inputs.release_name }}"    
+        tag: "v0.1.0-rc${{ github.run_number }}"    

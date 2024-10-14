@@ -4,6 +4,7 @@ edition = "2021"
 name = "hapticslib"
 repository = "https://github.com/yupiel/hapticslib"
 version = "0.1.0"
+license = "GPL-2.0-or-later"
 
 #size reduction efforts
 [profile.release]
@@ -15,3 +16,8 @@ strip = true
 
 [lib]
 crate-type = ["cdylib"]
+
+[dependencies]
+buttplug = { version = "8.0.0", features = ["client"] }
+log = { version = "0.4.22" }
+tokio = { version = "^1.39", features = ["rt", "rt-multi-thread"] }
