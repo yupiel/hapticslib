@@ -73,6 +73,9 @@ jobs:
     needs: build_multiple_os
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -82,7 +85,7 @@ jobs:
         uses: SebRollen/toml-action@v1.2.0
         id: project_verion
         with:
-          file: "Cargo.toml"
+          file: "./Cargo.toml"
           field: "package.version"
 
       - name: Create Pre-Release
