@@ -89,7 +89,7 @@ jobs:
           field: "package.version"
 
       - name: Create Pre-Release
-        if: ${{ github.event.inputs.release_type == 'pre-release' }}
+        if: ${{ github.event.inputs.release_type == 'pre-release' }} || ${{ github.event_name == 'push' }}
         uses: ncipollo/release-action@v1
         with:
           artifacts: ~/hapticslib-artifacts/**/*.zip
