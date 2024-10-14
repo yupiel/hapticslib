@@ -4,6 +4,7 @@ edition = "2021"
 name = "hapticslib"
 repository = "https://github.com/yupiel/hapticslib"
 version = "0.1.0"
+license = "GPL-2.0-or-later"
 
 #size reduction efforts
 [profile.release]
