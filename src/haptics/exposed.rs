@@ -27,7 +27,7 @@ pub extern "C-unwind" fn connect_haptics(L: *mut lua_State) -> c_int {
         ),
     }
 
-    return 1;
+    1
 }
 
 pub extern "C-unwind" fn kill(L: *mut lua_State) -> c_int {
@@ -35,7 +35,7 @@ pub extern "C-unwind" fn kill(L: *mut lua_State) -> c_int {
 
     superblt_instance.luaY_pushstring(L, haptics_kill());
 
-    return 1;
+    1
 }
 
 pub extern "C-unwind" fn ping(L: *mut lua_State) -> c_int {
@@ -43,7 +43,7 @@ pub extern "C-unwind" fn ping(L: *mut lua_State) -> c_int {
 
     superblt_instance.luaY_pushstring(L, haptics_ping());
 
-    return 1;
+    1
 }
 
 pub extern "C-unwind" fn scan_start(L: *mut lua_State) -> c_int {
@@ -51,7 +51,7 @@ pub extern "C-unwind" fn scan_start(L: *mut lua_State) -> c_int {
 
     superblt_instance.luaY_pushstring(L, haptics_scan_start());
 
-    return 1;
+    1
 }
 
 pub extern "C-unwind" fn scan_stop(L: *mut lua_State) -> c_int {
@@ -59,7 +59,7 @@ pub extern "C-unwind" fn scan_stop(L: *mut lua_State) -> c_int {
 
     superblt_instance.luaY_pushstring(L, haptics_scan_stop());
 
-    return 1;
+    1
 }
 
 pub extern "C-unwind" fn list_devices(L: *mut lua_State) -> c_int {
@@ -89,7 +89,7 @@ pub extern "C-unwind" fn list_devices(L: *mut lua_State) -> c_int {
         }
     }
 
-    return 1;
+    1
 }
 
 pub extern "C-unwind" fn stop_all(L: *mut lua_State) -> c_int {
@@ -97,7 +97,7 @@ pub extern "C-unwind" fn stop_all(L: *mut lua_State) -> c_int {
 
     superblt_instance.luaY_pushstring(L, haptics_stop_all());
 
-    return 1;
+    1
 }
 
 pub extern "C-unwind" fn vibrate(L: *mut lua_State) -> c_int {
@@ -108,5 +108,5 @@ pub extern "C-unwind" fn vibrate(L: *mut lua_State) -> c_int {
 
     superblt_instance.luaY_pushstring(L, haptics_vibrate(lua_param));
 
-    return 1;
+    1
 }

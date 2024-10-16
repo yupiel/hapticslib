@@ -115,7 +115,7 @@ impl SuperBLT {
         def: *const c_char,
         lst: *const [*const c_char],
     ) -> c_int {
-        let name: *const c_char = if def == std::ptr::null() {
+        let name: *const c_char = if def.is_null() {
             self.luaL_optstring(L, narg, def)
         } else {
             self.luaL_checkstring(L, narg)

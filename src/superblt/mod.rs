@@ -4,7 +4,7 @@ pub mod lua;
 pub mod model;
 pub mod pd2_logger;
 
-pub(self) mod util;
+mod util;
 pub use model::SUPERBLT;
 
 pub const SUPERBLT_EXPORTED_FUNCTIONS: &[&str] = &[

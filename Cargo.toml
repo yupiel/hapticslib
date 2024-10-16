@@ -3,7 +3,7 @@ authors = ["Yupiel <yupiel@yupiel.net>", "Siri <siri1999kira@yahoo.co.jp>"]
 edition = "2021"
 name = "hapticslib"
 repository = "https://github.com/yupiel/hapticslib"
-version = "1.0.0"
+version = "1.0.1"
 license = "GPL-2.0-or-later"
 
 # size reduction efforts
@@ -19,5 +19,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 buttplug = { version = "9.0", features = ["client"] }
-log = { version = "0.4.22" }
-tokio = { version = "^1.39", features = ["rt", "rt-multi-thread"] }
+log = { version = "0.4" }
+tokio = { version = "1.4", features = ["rt", "rt-multi-thread"] }

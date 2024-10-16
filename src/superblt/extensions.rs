@@ -37,7 +37,7 @@ impl SuperBLT {
         self.lua_setfield(L, index, key_cstring.as_ptr());
     }
 
-    pub fn luaY_vectoarraytable(&self, L: *mut lua_State, string_list: &Vec<String>) {
+    pub fn luaY_vectoarraytable(&self, L: *mut lua_State, string_list: &[String]) {
         self.lua_newtable(L);
 
         for (index, string_entry) in string_list.iter().enumerate() {

@@ -28,5 +28,5 @@ pub fn plugin_push_lua(L: *mut lua_State) -> c_int {
     superblt_instance.luaY_pushcfunction(L, stop_all, "stopAll");
     superblt_instance.luaY_pushcfunction(L, vibrate, "vibrate");
 
-    return 1;
+    1
 }

@@ -99,13 +99,14 @@ pub fn haptics_spawn_thread(websocket_address: String, mpsc_receiver: Receiver<H
             client.start_scanning().await.unwrap();
             client.stop_scanning().await.unwrap();
 
-            //Load initial list of devices
-            let mut device_list = HAPTICS_DEVICES.lock().unwrap();
-            for device in client.devices() {
-                device_list.push(device.name().into());
+            {
+                //Load initial list of devices
+                let mut device_list = HAPTICS_DEVICES.lock().unwrap();
+                for device in client.devices() {
+                    device_list.push(device.name().into());
+                }
             }
-            drop(device_list);
-
+            
             let main_loop_context = HandlerContext {
                 haptics_client: client,
                 haptics_receiver: mpsc_receiver

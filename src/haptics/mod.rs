@@ -1,4 +1,4 @@
 pub mod channel;
 pub mod exposed;
-pub(self) mod handlers;
+mod handlers;
 pub mod intiface;

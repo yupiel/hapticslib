@@ -137,9 +137,9 @@ impl From<log::Level> for LogType {
     }
 }
 
-impl Into<std::ffi::c_int> for LogType {
-    fn into(self) -> std::ffi::c_int {
-        self as std::ffi::c_int
+impl From<LogType> for std::ffi::c_int {
+    fn from(value: LogType) -> Self {
+        value as std::ffi::c_int
     }
 }
 
@@ -154,8 +154,8 @@ impl log::Log for PD2Logger {
 
     fn log(&self, record: &log::Record) {
         if self.enabled(record.metadata()) {
-            let message_cstring = CString::new(format!("{}", record.args())).unwrap();
-            let file_cstring = CString::new(format!("{}", record.file().unwrap_or(""))).unwrap();
+            let message_cstring = CString::new(record.args().to_string()).unwrap();
+            let file_cstring = CString::new(record.file().unwrap_or("").to_string()).unwrap();
 
             PD2HOOK_LOG.get().unwrap()(
                 message_cstring.as_ptr(),

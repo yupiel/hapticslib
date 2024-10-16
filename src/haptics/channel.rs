@@ -48,13 +48,14 @@ pub fn set_or_update_haptics_sender(
                 Err(poison_error) => {
                     return Err(format!(
                         "Failed updating Haptics Communicator. Message: {}",
-                        poison_error.to_string()
+                        poison_error
                     ))
                 }
             };
             *sender_writer = new_haptics_sender;
 
-            Ok(drop(sender_writer))
+            drop(sender_writer);
+            Ok(())
         }
         None => match HAPTICS_SENDER.set(RwLock::new(new_haptics_sender)) {
             Ok(_) => Ok(()),
